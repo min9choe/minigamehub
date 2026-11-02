@@ -1,4 +1,4 @@
-// 알까기 물리(기획안 4장). 판은 가로세로 1인 정사각형이고, 돌 중심이 판 밖으로 나가면 떨어진다.
+// 돌 튕기기 물리(알까기, 땅따먹기 공용). 판은 가로세로 1인 정사각형이고, 돌 중심이 판 밖으로 나가면 떨어진다.
 // 같은 입력이면 어느 기기에서든 거의 같은 결과가 나오도록 고정 간격으로 계산한다.
 // 그래도 기기마다 미세한 오차가 날 수 있으므로, 최종 위치는 쏜 사람이 계산한 값으로 모두 맞춘다.
 
@@ -88,13 +88,4 @@ export function simulate(from: Disc[], shot: Shot): Disc[] {
   bodies[shot.id].vy = shot.vy
   for (let i = 0; i < MAX_STEPS && step(bodies); i++);
   return toDiscs(bodies)
-}
-
-/** 처음 배치: 양쪽 5개씩 줄지어 놓는다. owner 0은 아래쪽, 1은 위쪽 */
-export function initialDiscs(): Disc[] {
-  const xs = [0.2, 0.35, 0.5, 0.65, 0.8]
-  return [
-    ...xs.map((x) => ({ x, y: 0.8, owner: 0, out: false })),
-    ...xs.map((x) => ({ x, y: 0.2, owner: 1, out: false })),
-  ]
 }

@@ -5,7 +5,16 @@
 // 받는 쪽은 같은 입력(id, vx, vy)으로 움직임을 재생해 보여 주고, 멈추면 end로 맞춘다.
 import { esc } from '../../ui/dom'
 import type { GameDef } from '../types'
-import { DT, MAX_SPEED, R, initialDiscs, simulate, step, toBodies, type Body, type Disc } from './physics'
+import { DT, MAX_SPEED, R, simulate, step, toBodies, type Body, type Disc } from '../shared/physics'
+
+/** 처음 배치: 양쪽 5개씩 줄지어 놓는다. owner 0은 아래쪽, 1은 위쪽 */
+export function initialDiscs(): Disc[] {
+  const xs = [0.2, 0.35, 0.5, 0.65, 0.8]
+  return [
+    ...xs.map((x) => ({ x, y: 0.8, owner: 0, out: false })),
+    ...xs.map((x) => ({ x, y: 0.2, owner: 1, out: false })),
+  ]
+}
 
 type State = {
   order: string[]

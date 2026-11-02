@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_SPEED, R, initialDiscs, simulate, type Disc } from './physics'
+import { initialDiscs } from '../alkkagi'
+import { MAX_SPEED, R, simulate, type Disc } from './physics'
 
 const disc = (x: number, y: number, owner = 0): Disc => ({ x, y, owner, out: false })
 
-describe('알까기 물리', () => {
+describe('돌 튕기기 물리', () => {
   it('약하게 튕기면 판 안에서 멈춘다', () => {
     const [end] = simulate([disc(0.5, 0.8)], { id: 0, vx: 0, vy: -0.5 })
     expect(end.out).toBe(false)

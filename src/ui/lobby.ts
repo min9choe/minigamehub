@@ -41,9 +41,9 @@ export function renderLobby(root: HTMLElement) {
         <section class="games" aria-label="게임">
           ${GAMES.map(
             (g) => `
-            <article class="game card${g.test ? ' is-test' : ''}" data-game="${g.id}">
+            <article class="game card" data-game="${g.id}">
               <div class="game-head">
-                <h3>${esc(g.name)}${g.test ? ' <span class="tag">테스트</span>' : ''}</h3>
+                <h3>${esc(g.name)}</h3>
                 <span class="cap">${capacityLabel(g)}</span>
               </div>
               <p>${esc(g.summary)}</p>

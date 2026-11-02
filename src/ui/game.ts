@@ -116,14 +116,24 @@ export function renderGame(root: HTMLElement, room: RoomHandle) {
         </div>`
     } else if (v.phase === 'result' && v.result) {
       const winners = v.result.winners
-      const title = winners.length === 0 ? '무승부' : winners.includes(me) ? '승리!' : v.order.includes(me) ? '패배' : '경기 종료'
-      const sub = winners.length ? `${winners.map(name).join(', ')} 승리` : '승부가 나지 않았어요'
+      const everyone = v.order.filter((id) => !v.forfeited.has(id))
+      const title =
+        winners.length === 0 || (winners.length > 1 && winners.length === everyone.length)
+          ? '무승부'
+          : winners.includes(me)
+            ? winners.length > 1
+              ? '공동 승리!'
+              : '승리!'
+            : v.order.includes(me)
+              ? '패배'
+              : '경기 종료'
+      const sub = title === '무승부' ? '승부가 나지 않았어요' : `${winners.map(name).join(', ')} 승리`
       const voted = v.rematch.has(me)
       const canRematch = here >= game.min
       const votes = info.players.filter((p) => v.present.has(p.id) && v.rematch.has(p.id)).length
       overlay.innerHTML = `
         <div class="overlay-card">
-          <h2 class="result-title${winners.includes(me) ? ' is-win' : ''}">${title}</h2>
+          <h2 class="result-title${title.includes('승리') ? ' is-win' : ''}">${title}</h2>
           <p>${sub}</p>
           <div class="overlay-actions">
             <button class="btn primary" type="button" data-action="rematch" ${voted || !canRematch ? 'disabled' : ''}>

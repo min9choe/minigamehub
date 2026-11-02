@@ -287,16 +287,6 @@ input:focus-visible {
 }
 
 /* 줄서기 */
-.tag {
-  margin-left: 4px;
-  padding: 1px 6px;
-  border-radius: 6px;
-  background: var(--line);
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-  vertical-align: middle;
-}
 .game.is-queued {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
@@ -467,37 +457,6 @@ input:focus-visible {
   margin-top: 8px;
 }
 
-/* 더미 게임: 10 먼저 말하기 */
-.c10 {
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-  padding: 24px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  text-align: center;
-}
-.c10-rule,
-.c10-last {
-  min-height: 1.5em;
-  color: var(--muted);
-}
-.c10-total {
-  font-size: 96px;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.c10-actions {
-  display: flex;
-  gap: 12px;
-}
-.c10-actions .btn {
-  min-width: 96px;
-  font-size: 20px;
-}
-
 /* 틱택토 */
 .ttt {
   display: grid;
@@ -629,6 +588,73 @@ input:focus-visible {
   cursor: grab;
 }
 .alk-hint {
+  min-height: 1.5em;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 땅따먹기 */
+.terr {
+  display: grid;
+  gap: 8px;
+}
+.terr-scores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.terr-scores li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 14px;
+}
+.terr-scores li i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.terr-scores li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.terr-scores li b {
+  font-variant-numeric: tabular-nums;
+}
+.terr-scores li small {
+  grid-column: 2 / 4;
+  color: var(--muted);
+  font-size: 12px;
+}
+.terr-scores li.is-turn {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.terr-scores li.is-me span {
+  font-weight: 600;
+}
+.terr-scores li.is-out {
+  opacity: 0.5;
+}
+.terr-wrap {
+  display: flex;
+  justify-content: center;
+}
+.terr-board {
+  border-radius: 8px;
+  touch-action: none;
+}
+.terr-hint {
   min-height: 1.5em;
   color: var(--muted);
   font-size: 14px;
