@@ -10,6 +10,8 @@ cp .env.example .env.local   # Supabase URL과 publishable 키를 넣는다
 npm run dev
 ```
 
+규칙 테스트(오목 3-3 금수 등)는 `npm test`로 돌린다.
+
 두 사람 테스트는 일반 창과 시크릿 창(또는 `localhost`와 `[::1]`처럼 다른 주소)으로 연다. 같은 브라우저의 탭은 한 사람으로 합쳐진다.
 
 ## 배포

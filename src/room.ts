@@ -92,7 +92,8 @@ export function createRoom(opts: {
   let syncTimer = 0
   let intentTimer = 0
 
-  const hostId = () => ids.find((id) => members.get(id)?.hasState)
+  // 내 판 상태는 서버에 반영되기를 기다리지 않고 내가 아는 값으로 판단한다
+  const hostId = () => ids.find((id) => (id === me ? hasState && members.has(me) : members.get(id)?.hasState))
   const iAmHost = () => hostId() === me
   const present = () => ids.filter((id) => members.has(id))
   const live = () => phase === 'countdown' || phase === 'playing'

@@ -44,16 +44,18 @@ export function openChannel<T extends object>(
   let lastState: T | null = null
 
   async function trackNow(state: T) {
-    if ((await ch.track(state)) === 'ok') return true
+    // _t: 같은 사람의 상태가 여럿 보일 때 가장 최근 것을 고르는 데 쓴다
+    if ((await ch.track({ ...state, _t: Date.now() })) === 'ok') return true
     await wait(3_000) // 무료 요금제의 상태 변경 한도(30초에 5회)에 걸렸을 수 있다
-    return (await ch.track(state)) === 'ok'
+    return (await ch.track({ ...state, _t: Date.now() })) === 'ok'
   }
 
   ch.on('presence', { event: 'sync' }, () => {
     const members: Record<string, T> = {}
-    for (const [id, metas] of Object.entries(ch.presenceState<T>())) {
-      // 같은 키로 여러 연결이 있으면(같은 브라우저의 탭 여러 개) 첫 번째만 쓴다
-      const { presence_ref: _ref, ...state } = metas[0]
+    for (const [id, metas] of Object.entries(ch.presenceState<T & { _t?: number }>())) {
+      // 같은 키로 상태가 여럿이면(새로고침 직후 옛 연결이 아직 남아 있거나, 같은 브라우저의 탭 여러 개) 가장 최근에 보낸 것을 쓴다
+      const latest = metas.reduce((a, b) => ((b._t ?? 0) > (a._t ?? 0) ? b : a))
+      const { presence_ref: _ref, _t, ...state } = latest
       members[id] = state as unknown as T
     }
     handlers.onPresence?.(members)

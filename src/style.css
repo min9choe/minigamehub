@@ -413,9 +413,12 @@ input:focus-visible {
 .game-notice[hidden] {
   display: none;
 }
+/* 내 차례가 아니면 판을 누를 수 없다. 판 자체는 흐리게 하지 않아 상대 수를 보기 좋게 한다 */
 .board.locked {
-  opacity: 0.6;
   pointer-events: none;
+}
+.board.locked .btn {
+  opacity: 0.5;
 }
 
 .overlay {
@@ -493,4 +496,105 @@ input:focus-visible {
 .c10-actions .btn {
   min-width: 96px;
   font-size: 20px;
+}
+
+/* 틱택토 */
+.ttt {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+.ttt-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  font-size: 15px;
+}
+.ttt-score b {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+.ttt-score span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ttt-score span:first-child {
+  text-align: right;
+}
+.ttt-info {
+  min-height: 1.5em;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+.ttt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: min(360px, 100%);
+  aspect-ratio: 1;
+}
+.ttt-cell {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: clamp(40px, 14vw, 72px);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.ttt-cell:disabled {
+  cursor: default;
+}
+.ttt-cell:not(:disabled):hover {
+  border-color: var(--accent);
+}
+.ttt-cell[data-mark='X'] {
+  color: var(--accent);
+}
+.ttt-cell[data-mark='O'] {
+  color: var(--bad);
+}
+.ttt-cell.is-line {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  border-color: var(--accent);
+}
+
+/* 오목 */
+.omok {
+  display: grid;
+  gap: 8px;
+}
+.omok-info {
+  font-size: 15px;
+}
+.omok-wrap {
+  display: flex;
+  justify-content: center;
+}
+.omok-board {
+  border-radius: 8px;
+  touch-action: none;
+  cursor: pointer;
+}
+.omok-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: var(--tap);
+}
+.omok-hint {
+  color: var(--muted);
+  font-size: 14px;
+}
+.omok-actions .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
