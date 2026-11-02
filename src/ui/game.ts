@@ -2,13 +2,14 @@
 import { leaveRoom } from '../app'
 import { findGame } from '../games/catalog'
 import { displayNames, getPlayerId } from '../identity'
-import type { RoomHandle, RoomView } from '../room'
+import type { RoomLike, RoomView } from '../room'
 import { go } from '../router'
+import { isMuted, onMuteChange, setMuted, sfx } from '../sound'
 import { $, esc } from './dom'
 
 const secondsLeft = (until: number | null) => (until ? Math.max(0, Math.ceil((until - Date.now()) / 1000)) : 0)
 
-export function renderGame(root: HTMLElement, room: RoomHandle) {
+export function renderGame(root: HTMLElement, room: RoomLike) {
   const { info } = room
   const game = findGame(info.gameId)!
   const def = game.def!
@@ -23,7 +24,10 @@ export function renderGame(root: HTMLElement, room: RoomHandle) {
           <strong>${esc(game.name)}</strong>
           <span class="clock"></span>
         </div>
-        <button class="btn ghost danger" type="button" data-action="forfeit" hidden>기권</button>
+        <div class="game-actions">
+          <button class="btn ghost icon" type="button" data-action="mute"></button>
+          <button class="btn ghost danger" type="button" data-action="forfeit" hidden>기권</button>
+        </div>
       </header>
       <ul class="seats"></ul>
       <div class="game-notice" hidden></div>
@@ -37,9 +41,19 @@ export function renderGame(root: HTMLElement, room: RoomHandle) {
   const board = $(root, '.board')
   const overlay = $(root, '.overlay')
   const forfeitBtn = $<HTMLButtonElement>(root, '[data-action=forfeit]')
+  const muteBtn = $<HTMLButtonElement>(root, '[data-action=mute]')
+  const showMute = () => {
+    muteBtn.textContent = isMuted() ? '🔇' : '🔊'
+    muteBtn.setAttribute('aria-label', isMuted() ? '소리 켜기' : '소리 끄기')
+  }
+  showMute()
 
   const gameView = def.mount(board, { myId: me, names, play: (m) => room.play(m) })
   let overlayKey = ''
+  // 효과음을 낼 때를 알아채려고 직전 상태를 기억한다
+  let lastPhase = ''
+  let lastTick = 0
+  let lastTurn: string | null = null
 
   // 0.25초마다 다시 그리므로, 내용이 같으면 건드리지 않아야 누르던 버튼이 사라지지 않는다
   const lastHtml = new Map<HTMLElement, string>()
@@ -56,6 +70,7 @@ export function renderGame(root: HTMLElement, room: RoomHandle) {
     const iPlay = v.order.includes(me)
     const iAmOut = v.forfeited.has(me)
 
+    playSounds(v, turn)
     if (v.state !== null) gameView.render(v.state)
     board.classList.toggle('locked', v.phase !== 'playing' || turn !== me)
     forfeitBtn.hidden = !(iPlay && !iAmOut && (v.phase === 'countdown' || v.phase === 'playing'))
@@ -92,6 +107,24 @@ export function renderGame(root: HTMLElement, room: RoomHandle) {
     }
 
     renderOverlay(v)
+  }
+
+  function playSounds(v: RoomView, turn: string | null) {
+    if (v.phase === 'countdown') {
+      const sec = secondsLeft(v.countdownEnd)
+      if (sec > 0 && sec !== lastTick) sfx.tick()
+      lastTick = sec
+    } else lastTick = 0
+    if (v.phase === 'playing' && lastPhase === 'countdown') sfx.go()
+    else if (v.phase === 'playing' && turn === me && lastTurn !== me) sfx.myTurn()
+    if (v.phase === 'result' && lastPhase !== 'result' && lastPhase !== '' && v.result) {
+      const { winners } = v.result
+      const draw = winners.length === 0 || winners.length === v.order.filter((id) => !v.forfeited.has(id)).length
+      if (!draw && winners.includes(me)) sfx.win()
+      else if (!draw && v.order.includes(me)) sfx.lose()
+    }
+    lastPhase = v.phase
+    lastTurn = v.phase === 'playing' ? turn : null
   }
 
   function renderOverlay(v: RoomView) {
@@ -149,6 +182,9 @@ export function renderGame(root: HTMLElement, room: RoomHandle) {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action]')
     if (!btn || btn.disabled) return
     switch (btn.dataset.action) {
+      case 'mute':
+        setMuted(!isMuted())
+        break
       case 'forfeit':
         if (confirm('기권할까요? 이번 판은 패배로 처리돼요.')) room.forfeit()
         break
@@ -165,6 +201,7 @@ export function renderGame(root: HTMLElement, room: RoomHandle) {
   }
 
   root.addEventListener('click', onClick)
+  const unsubscribeMute = onMuteChange(showMute)
   const unsubscribe = room.subscribe(update)
   const ticker = window.setInterval(update, 250) // 남은 시간과 카운트다운 숫자
   update()
@@ -172,6 +209,7 @@ export function renderGame(root: HTMLElement, room: RoomHandle) {
   return () => {
     clearInterval(ticker)
     unsubscribe()
+    unsubscribeMute()
     root.removeEventListener('click', onClick)
     gameView.destroy()
   }

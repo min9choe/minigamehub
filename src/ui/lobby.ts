@@ -1,9 +1,9 @@
 // 로비 화면: 접속 인원, 게임 카드와 줄서기, 대기 바, 접속자 목록(기획안 7장).
-import { getLobby, takeNotice } from '../app'
+import { closeInvite, currentInvite, getLobby, makeInvite, startPractice, takeNotice, takePendingQueue } from '../app'
 import { GAMES, capacityLabel, findGame } from '../games/catalog'
 import { displayNames, getPlayerId, loadProfile } from '../identity'
 import { isConfigured, type ChannelStatus } from '../net/realtime'
-import { go } from '../router'
+import { go, refresh } from '../router'
 import { $, esc } from './dom'
 
 const STATUS_TEXT: Record<ChannelStatus, string> = {
@@ -37,6 +37,17 @@ export function renderLobby(root: HTMLElement) {
         </div>
       </header>
       <div class="banner" role="status" hidden></div>
+      <section class="invite card" hidden>
+        <p class="invite-text"></p>
+        <div class="invite-link">
+          <input type="text" readonly aria-label="초대 링크" />
+          <button class="btn primary" type="button" data-action="copy-invite">복사</button>
+        </div>
+        <div class="invite-actions">
+          <button class="btn" type="button" data-action="share-invite" hidden>공유하기</button>
+          <button class="btn ghost" type="button" data-action="close-invite">닫기</button>
+        </div>
+      </section>
       <main>
         <section class="games" aria-label="게임">
           ${GAMES.map(
@@ -64,8 +75,20 @@ export function renderLobby(root: HTMLElement) {
           <span class="queue-text"></span>
           <button class="btn" type="button" data-action="cancel">취소</button>
         </div>
-        <button class="btn ghost" type="button" data-action="leave">닉네임·로비 바꾸기</button>
+        <div class="bottom-actions">
+          <button class="btn" type="button" data-action="open-invite">친구 초대 링크</button>
+          <button class="btn" type="button" data-action="open-practice">봇과 연습</button>
+          <button class="btn ghost" type="button" data-action="leave">닉네임·로비 바꾸기</button>
+        </div>
       </footer>
+      <div class="sheet" hidden>
+        <div class="sheet-card" role="dialog" aria-modal="true">
+          <h2 class="sheet-title"></h2>
+          <p class="sheet-desc"></p>
+          <div class="sheet-list"></div>
+          <button class="btn ghost" type="button" data-action="close-sheet">닫기</button>
+        </div>
+      </div>
     </div>
   `
 
@@ -126,6 +149,12 @@ export function renderLobby(root: HTMLElement) {
       card.classList.toggle('is-queued', inThis)
     }
 
+    // 초대한 사람·초대 링크로 들어온 사람은 연결되자마자 그 게임 줄에 선다
+    if (status === 'connected' && !mine.room) {
+      const auto = takePendingQueue()
+      if (auto && mine.game !== auto) lobby.joinQueue(auto)
+    }
+
     // 대기 바: '오목 대기 중 1/2 [취소]'
     const bar = $(root, '.queue-bar')
     const game = mine.game ? findGame(mine.game) : undefined
@@ -159,6 +188,7 @@ export function renderLobby(root: HTMLElement) {
 
   root.addEventListener('click', onClick)
   function onClick(e: Event) {
+    if (e.target === sheet) sheet.hidden = true // 바깥을 누르면 닫는다
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action]')
     if (!btn || btn.disabled) return
     switch (btn.dataset.action) {
@@ -176,8 +206,80 @@ export function renderLobby(root: HTMLElement) {
       case 'leave':
         go('/')
         break
+      case 'open-invite':
+        openSheet(
+          '친구 초대 링크',
+          '어떤 게임으로 초대할까요? 링크를 받은 친구가 들어오면 줄 없이 바로 시작해요.',
+          GAMES.filter((g) => g.def),
+          'invite'
+        )
+        break
+      case 'open-practice':
+        openSheet('봇과 연습', '혼자서 봇과 둬요. 줄을 서 있었다면 연습하는 동안에도 매칭될 수 있어요.', GAMES.filter((g) => g.bot), 'practice')
+        break
+      case 'close-sheet':
+        sheet.hidden = true
+        break
+      case 'pick': {
+        sheet.hidden = true
+        const id = btn.dataset.game!
+        if (btn.dataset.kind === 'practice') startPractice(id)
+        else if (makeInvite(id)) refresh() // 초대 전용 로비로 옮겨 간다
+        break
+      }
+      case 'copy-invite':
+        void copyInvite(btn)
+        break
+      case 'share-invite': {
+        const inv = currentInvite()
+        if (inv) void navigator.share?.({ title: '미니 게임 허브', text: `${findGame(inv.gameId)?.name} 한 판 해요!`, url: inv.link }).catch(() => {})
+        break
+      }
+      case 'close-invite':
+        closeInvite()
+        showInvite()
+        break
     }
   }
+
+  const sheet = $(root, '.sheet')
+  function openSheet(title: string, desc: string, games: typeof GAMES, kind: 'invite' | 'practice') {
+    $(sheet, '.sheet-title').textContent = title
+    $(sheet, '.sheet-desc').textContent = desc
+    $(sheet, '.sheet-list').innerHTML = games
+      .map(
+        (g) => `<button class="btn" type="button" data-action="pick" data-kind="${kind}" data-game="${g.id}">
+          ${esc(g.name)} <small>${capacityLabel(g)}</small></button>`
+      )
+      .join('')
+    sheet.hidden = false
+  }
+
+  // 초대 링크 안내: 초대로 만든 로비에 있는 동안 보인다
+  const invitePanel = $(root, '.invite')
+  function showInvite() {
+    const inv = currentInvite()
+    invitePanel.hidden = !inv
+    if (!inv) return
+    const game = findGame(inv.gameId)!
+    $(invitePanel, '.invite-text').textContent = `${game.name} 초대 링크를 만들었어요. 친구에게 보내면 링크로 들어온 사람과 바로 시작해요(${capacityLabel(game)}).`
+    $<HTMLInputElement>(invitePanel, 'input').value = inv.link
+    $(invitePanel, '[data-action=share-invite]').hidden = typeof navigator.share !== 'function'
+  }
+
+  async function copyInvite(btn: HTMLButtonElement) {
+    const input = $<HTMLInputElement>(invitePanel, 'input')
+    try {
+      await navigator.clipboard.writeText(input.value)
+      btn.textContent = '복사됨'
+    } catch {
+      // 클립보드를 쓸 수 없으면 링크를 선택해 두어 직접 복사하게 한다
+      input.select()
+      btn.textContent = '길게 눌러 복사'
+    }
+    setTimeout(() => (btn.textContent = '복사'), 2000)
+  }
+  showInvite()
 
   const unsubscribe = lobby.subscribe(update)
   update()

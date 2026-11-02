@@ -30,6 +30,17 @@ export type RoomView = {
 
 export type RoomHandle = ReturnType<typeof createRoom>
 
+/** 게임 화면이 쓰는 방의 겉모습. 온라인 방(createRoom)과 봇 연습 방(practice.ts)이 함께 따른다 */
+export type RoomLike = {
+  info: RoomInfo
+  view(): RoomView
+  subscribe(fn: () => void): () => void
+  play(move: unknown): void
+  forfeit(): void
+  requestRematch(): void
+  leave(): Promise<void>
+}
+
 type Presence = { hasState: boolean }
 type GameEvent = { v: number; kind: 'move' | 'timeout' | 'forfeit'; by: string; move?: unknown }
 type StartMsg = { round: number; seed: number; order: string[] }

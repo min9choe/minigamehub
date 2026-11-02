@@ -1,4 +1,5 @@
 // 땅따먹기 화면: 땅 칠하기, 이번 턴 경로, 새총 입력, 다른 사람이 튕긴 움직임 재생.
+import { sfx } from '../../sound'
 import { esc } from '../../ui/dom'
 import { DT, MAX_SPEED, step, toBodies, type Body } from '../shared/physics'
 import type { GameContext, GameView } from '../types'
@@ -233,6 +234,7 @@ export function mountTerritory(el: HTMLElement, ctx: GameContext<Move>): GameVie
       return bodies
     }
     anim = { bodies: make(), acc: 0, last: performance.now(), steps: 0, player: shot.player }
+    sfx.flick()
     // 브라우저가 그리기를 멈춰도 재생 길이가 지나면 끝낸다
     const probe = make()
     let total = 0
@@ -283,6 +285,8 @@ export function mountTerritory(el: HTMLElement, ctx: GameContext<Move>): GameVie
           const who = name(s.lastTurn.player)
           notice = s.lastTurn.ok ? `${who} 성공! 땅 +${s.lastTurn.gained}칸` : `${who} 실패. 땅은 그대로예요`
           noticeUntil = Date.now() + 3000
+          // 재생이 끝날 즈음 결과 소리를 낸다
+          window.setTimeout(s.lastTurn.ok ? sfx.gain : sfx.fall, anim ? 900 : 0)
         }
         shownShot = s.shotNo
       }

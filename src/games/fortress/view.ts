@@ -1,4 +1,5 @@
 // 포트리스 화면: 지형과 탱크, 포탄 재생, 이동·각도·파워 조작.
+import { sfx } from '../../sound'
 import { esc } from '../../ui/dom'
 import type { GameContext, GameView } from '../types'
 import type { Move, State } from '.'
@@ -252,6 +253,7 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
     // 날아가는 모습은 이 기기에서 계산한 궤적으로, 끝점은 쏜 사람이 보낸 착탄 위치로 맞춘다
     if (shot.impact) path[path.length - 1] = shot.impact
     anim = { ground: shot.ground, tanks: shot.tanks, shooter: shot.player, path, impact: shot.impact, t: 0, last: performance.now(), boomUntil: 0 }
+    sfx.flick()
     const flight = path.length * DT
     // 브라우저가 그리기를 멈춰도 재생 길이가 지나면 끝낸다
     clearTimeout(animTimer)
@@ -263,7 +265,10 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
       anim.last = now
       if (anim.t >= flight) {
         if (!anim.impact) return endAnim()
-        if (!anim.boomUntil) anim.boomUntil = now + 400
+        if (!anim.boomUntil) {
+          anim.boomUntil = now + 400
+          sfx.boom()
+        }
         if (now >= anim.boomUntil) return endAnim()
       }
       draw()

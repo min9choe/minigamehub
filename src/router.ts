@@ -11,3 +11,8 @@ export function currentRoute(): Route {
 export function go(path: string) {
   location.hash = `#${path}`
 }
+
+/** 주소는 그대로 두고 지금 화면을 다시 그린다(로비 코드를 바꿨을 때 등) */
+export function refresh() {
+  window.dispatchEvent(new HashChangeEvent('hashchange'))
+}

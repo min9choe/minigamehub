@@ -1,11 +1,12 @@
 // 틱택토(기획안 4장): 3×3 판에서 X가 선공, 한 줄을 먼저 완성하면 그 판 승리. 3판 2선승이고 무승부 판은 세지 않고 다시 한다.
+import { sfx } from '../../sound'
 import { esc } from '../../ui/dom'
 import type { GameDef } from '../types'
 
-type Cell = 0 | 1 | 2 // 빈칸, X, O
+export type Cell = 0 | 1 | 2 // 빈칸, X, O
 type Board = Cell[]
 
-type State = {
+export type State = {
   order: string[]
   /** 첫 판에서 X를 맡는 사람(order 번호). 판마다 X가 번갈아 바뀐다 */
   firstX: number
@@ -17,7 +18,7 @@ type State = {
   prev: { cells: Board; line: number[] | null; winner: number | null } | null
   winner: number | null
 }
-type Move = { cell: number }
+export type Move = { cell: number }
 
 const WINS_NEEDED = 2
 const LINES = [
@@ -29,9 +30,9 @@ const SYMBOL = ['', 'X', 'O']
 
 const empty = (): Board => Array(9).fill(0)
 const xOf = (s: State, boardNo = s.boardNo) => (s.firstX + boardNo) % 2
-const markOf = (s: State, player: number): Cell => (player === xOf(s) ? 1 : 2)
+export const markOf = (s: State, player: number): Cell => (player === xOf(s) ? 1 : 2)
 
-function findLine(b: Board): number[] | null {
+export function findLine(b: Board): number[] | null {
   return LINES.find(([a, c, d]) => b[a] !== 0 && b[a] === b[c] && b[a] === b[d]) ?? null
 }
 
@@ -95,6 +96,7 @@ export const tictactoe: GameDef<State, Move> = {
     const cells = [...el.querySelectorAll<HTMLButtonElement>('.ttt-cell')]
 
     let latest: State | null = null
+    let lastMarks = 0
     let shownBoardNo = -1
     let prevUntil = 0
     let prevTimer = 0
@@ -139,6 +141,10 @@ export const tictactoe: GameDef<State, Move> = {
 
     return {
       render(s) {
+        // 칸이 하나 채워질 때마다(판이 넘어가도) 소리를 낸다. 처음 그릴 때는 내지 않는다
+        const marks = s.boardNo * 10 + s.board.filter((c) => c !== 0).length
+        if (latest && marks > lastMarks) sfx.place()
+        lastMarks = marks
         latest = s
         if (s.boardNo !== shownBoardNo) {
           // 새 판으로 넘어갔으면 끝난 판을 1.5초 보여 준다

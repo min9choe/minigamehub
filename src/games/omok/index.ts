@@ -1,9 +1,10 @@
 // 오목(기획안 4장): 15×15 판, 흑 선공, 5목 이상 승리, 흑만 3-3 금수. 판정은 rules.ts에 있다.
+import { sfx } from '../../sound'
 import { esc } from '../../ui/dom'
 import type { GameDef } from '../types'
 import { BLACK, EMPTY, N, WHITE, fiveLine, forbiddenPoints, idx, isForbidden, type Stone } from './rules'
 
-type State = {
+export type State = {
   order: string[]
   /** 흑을 맡는 사람(order 번호). 판마다 시드로 정한다 */
   black: number
@@ -15,7 +16,7 @@ type State = {
   winner: number | null
   draw: boolean
 }
-type Move = { x: number; y: number }
+export type Move = { x: number; y: number }
 
 const colorOf = (s: State, player: number): Stone => (player === s.black ? BLACK : WHITE)
 const playerOf = (s: State, color: Stone) => (color === BLACK ? s.black : 1 - s.black)
@@ -258,6 +259,7 @@ export const omok: GameDef<State, Move> = {
 
     return {
       render(s) {
+        if (latest && s.last !== null && s.last !== latest.last) sfx.place()
         latest = s
         if (forbiddenFor !== s) {
           forbiddenFor = s

@@ -3,6 +3,7 @@
 //
 // 동기화: 쏜 사람의 화면에서 물리 계산을 끝까지 해 최종 배치(end)를 수에 담아 보낸다.
 // 받는 쪽은 같은 입력(id, vx, vy)으로 움직임을 재생해 보여 주고, 멈추면 end로 맞춘다.
+import { sfx } from '../../sound'
 import { esc } from '../../ui/dom'
 import type { GameDef } from '../types'
 import { DT, MAX_SPEED, R, simulate, step, toBodies, type Body, type Disc } from '../shared/physics'
@@ -290,6 +291,7 @@ export const alkkagi: GameDef<State, Move> = {
       bodies[shot.id].vx = shot.vx
       bodies[shot.id].vy = shot.vy
       anim = { bodies, acc: 0, last: performance.now(), steps: 0 }
+      sfx.flick()
       cancelAnimationFrame(raf)
       // 브라우저가 그리기를 멈추면(가려진 창 등) 재생이 끝나지 않으므로, 재생 길이가 지나면 타이머로 끝낸다
       const probe = toBodies(shot.from)
@@ -310,11 +312,13 @@ export const alkkagi: GameDef<State, Move> = {
         anim.acc += Math.min(0.1, (now - anim.last) / 1000)
         anim.last = now
         let moving = true
+        const outBefore = anim.bodies.filter((b) => b.out).length
         while (anim.acc >= DT && moving) {
           moving = step(anim.bodies)
           anim.acc -= DT
           anim.steps++
         }
+        if (anim.bodies.filter((b) => b.out).length > outBefore) sfx.fall() // 돌이 판 밖으로 떨어졌다
         if (!moving || anim.steps > 1200) {
           // 멈추면 쏜 사람이 확정한 배치로 맞춘다
           anim = null

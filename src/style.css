@@ -43,6 +43,9 @@ body {
   margin: 0;
   min-height: 100dvh;
   background: var(--bg);
+  /* 휴대폰: 누를 때 회색 번쩍임을 없애고, 당겨서 새로고침이 판 조작과 겹치지 않게 한다 */
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
 h1,
@@ -68,6 +71,7 @@ p {
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation; /* 두 번 눌러 확대가 버튼 연타를 늦추지 않게 */
 }
 .btn.primary {
   background: var(--accent);
@@ -139,7 +143,7 @@ input:focus-visible {
 .lobby {
   max-width: 960px;
   margin: 0 auto;
-  padding: 0 16px 88px;
+  padding: 0 16px 150px;
 }
 .topbar {
   position: sticky;
@@ -746,5 +750,119 @@ input:focus-visible {
   }
   .game-top {
     padding: 6px 0 4px;
+  }
+}
+
+/* 7단계: 소리 버튼, 친구 초대, 봇 연습 */
+.game-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn.icon {
+  padding: 0 10px;
+  font-size: 18px;
+}
+.bottom-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.bottom-actions .btn {
+  padding: 0 14px;
+  font-size: 14px;
+}
+.ttt-cell {
+  touch-action: manipulation;
+}
+
+.invite {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 14px;
+  border-color: var(--accent);
+}
+.invite[hidden] {
+  display: none;
+}
+.invite-text {
+  font-size: 14px;
+}
+.invite-link {
+  display: flex;
+  gap: 8px;
+}
+.invite-link input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.invite-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.invite-note {
+  margin: -8px 0 16px;
+  padding: 12px 14px;
+  border-color: var(--accent);
+  font-size: 14px;
+}
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--bg) 60%, transparent);
+}
+.sheet[hidden] {
+  display: none;
+}
+.sheet-card {
+  display: grid;
+  gap: 10px;
+  width: min(420px, 100%);
+  margin-bottom: env(safe-area-inset-bottom);
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.sheet-card h2 {
+  font-size: 18px;
+}
+.sheet-desc {
+  color: var(--muted);
+  font-size: 14px;
+}
+.sheet-list {
+  display: grid;
+  gap: 8px;
+}
+.sheet-list .btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sheet-list .btn small {
+  color: var(--muted);
+  font-weight: 400;
+}
+@media (min-width: 600px) {
+  .sheet {
+    align-items: center;
   }
 }
