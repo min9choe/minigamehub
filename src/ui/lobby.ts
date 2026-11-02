@@ -150,9 +150,11 @@ export function renderLobby(root: HTMLElement) {
       .join('')
   }
 
+  let cooldownTimer = 0
   function cooldown() {
     cooldownUntil = Date.now() + BUTTON_COOLDOWN
-    setTimeout(update, BUTTON_COOLDOWN + 50)
+    clearTimeout(cooldownTimer)
+    cooldownTimer = window.setTimeout(update, BUTTON_COOLDOWN + 50)
   }
 
   root.addEventListener('click', onClick)
@@ -180,6 +182,7 @@ export function renderLobby(root: HTMLElement) {
   const unsubscribe = lobby.subscribe(update)
   update()
   return () => {
+    clearTimeout(cooldownTimer) // 줄서기 직후 매칭되어 화면이 바뀌면 남은 갱신을 취소한다
     unsubscribe()
     root.removeEventListener('click', onClick)
   }

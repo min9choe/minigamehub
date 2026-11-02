@@ -598,3 +598,39 @@ input:focus-visible {
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+/* 알까기 */
+.alk {
+  display: grid;
+  gap: 8px;
+}
+.alk-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+.alk-score b {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.alk-vs {
+  color: var(--muted);
+  font-size: 13px;
+}
+.alk-wrap {
+  display: flex;
+  justify-content: center;
+}
+.alk-board {
+  border-radius: 8px;
+  touch-action: none;
+  cursor: grab;
+}
+.alk-hint {
+  min-height: 1.5em;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}

@@ -58,6 +58,8 @@ function openRoom(info: RoomInfo, rejoin: boolean) {
       go('/lobby')
     },
   })
+  // 개발 중에만: 콘솔에서 __mghRoom.view()로 판 상태를 들여다본다(배포 빌드에서는 빠진다)
+  if (import.meta.env.DEV) Object.assign(window, { __mghRoom: room })
 }
 
 /** 진행 중인 방. 새로고침했으면 저장해 둔 방 정보로 다시 들어간다 */
