@@ -285,3 +285,212 @@ input:focus-visible {
   background: var(--bg);
   border-top: 1px solid var(--line);
 }
+
+/* 줄서기 */
+.tag {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.game.is-queued {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.player-list small {
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.bottombar {
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.queue-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+  padding: 4px 4px 4px 14px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.queue-bar[hidden] {
+  display: none;
+}
+.queue-bar .btn {
+  flex-shrink: 0;
+}
+
+/* 게임 화면 */
+.game-screen {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+}
+.game-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0 8px;
+}
+.game-title {
+  display: grid;
+}
+.game-title strong {
+  font-size: 18px;
+}
+.clock {
+  min-height: 1.5em;
+  color: var(--muted);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.btn.danger {
+  color: var(--bad);
+}
+.seats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.seats li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 14px;
+}
+.seats li small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.seats li.is-me {
+  font-weight: 600;
+}
+.seats li.is-turn {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.seats li.is-turn small {
+  color: var(--accent);
+}
+.seats li.is-away small {
+  color: var(--warn);
+}
+.seats li.is-out {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+.game-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--radius);
+  background: var(--banner-bg);
+  color: var(--banner-text);
+}
+.game-notice[hidden] {
+  display: none;
+}
+.board.locked {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  backdrop-filter: blur(2px);
+}
+.overlay[hidden] {
+  display: none;
+}
+.overlay-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(360px, 100%);
+  padding: 24px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+}
+.overlay-card p {
+  color: var(--muted);
+}
+.countdown {
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.result-title {
+  font-size: 32px;
+}
+.result-title.is-win {
+  color: var(--accent);
+}
+.overlay-actions {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* 더미 게임: 10 먼저 말하기 */
+.c10 {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+}
+.c10-rule,
+.c10-last {
+  min-height: 1.5em;
+  color: var(--muted);
+}
+.c10-total {
+  font-size: 96px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.c10-actions {
+  display: flex;
+  gap: 12px;
+}
+.c10-actions .btn {
+  min-width: 96px;
+  font-size: 20px;
+}
