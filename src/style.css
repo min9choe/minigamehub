@@ -1,0 +1,287 @@
+:root {
+  --bg: #f6f5f1;
+  --surface: #ffffff;
+  --text: #1d1c1a;
+  --muted: #6b6862;
+  --line: #e3e0d8;
+  --accent: #2f6fde;
+  --accent-text: #ffffff;
+  --ok: #1f9d55;
+  --warn: #d97a00;
+  --bad: #d64545;
+  --banner-bg: #fff4e0;
+  --banner-text: #7a4a00;
+  --radius: 14px;
+  --tap: 44px; /* 손가락으로 누르기 쉬운 최소 높이(기획안 7장) */
+
+  font-family: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161614;
+    --surface: #22211f;
+    --text: #f1efea;
+    --muted: #a19d95;
+    --line: #36342f;
+    --accent: #6a9cf5;
+    --accent-text: #0c1424;
+    --banner-bg: #3a2c12;
+    --banner-text: #f5d39a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.btn {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+.btn.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+.btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.btn:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 입장 화면 */
+.entry {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 12vh 16px 32px;
+}
+.brand {
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+.tagline {
+  margin: 8px 0 24px;
+  color: var(--muted);
+}
+.entry-form {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+}
+.field {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+.field small {
+  font-weight: 400;
+  color: var(--muted);
+}
+.field input {
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px 미만이면 iOS가 입력할 때 화면을 확대한다 */
+}
+.hint {
+  font-size: 13px;
+}
+.error {
+  color: var(--bad);
+  font-size: 14px;
+}
+
+/* 로비 */
+.lobby {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 88px;
+}
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  background: var(--bg);
+}
+.me {
+  display: grid;
+  min-width: 0;
+}
+.my-nick {
+  font-size: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lobby-name,
+.count {
+  color: var(--muted);
+  font-size: 13px;
+}
+.count b {
+  color: var(--text);
+}
+.online {
+  display: grid;
+  justify-items: end;
+  flex-shrink: 0;
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.status i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+.status[data-status='connected'] i {
+  background: var(--ok);
+}
+.status[data-status='error'] i,
+.status[data-status='closed'] i {
+  background: var(--bad);
+}
+
+.banner {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--banner-bg);
+  color: var(--banner-text);
+  font-size: 14px;
+}
+
+.lobby main {
+  display: grid;
+  gap: 16px;
+}
+.games {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.game {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+.game-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.game-head h3 {
+  font-size: 18px;
+}
+.cap {
+  color: var(--muted);
+  font-size: 13px;
+}
+.game p {
+  color: var(--muted);
+  font-size: 14px;
+}
+.game-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+.waiting {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.players {
+  padding: 16px;
+}
+.players h2 {
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+.player-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.player-list li {
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 14px;
+}
+.player-list li.is-me {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.bottombar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
