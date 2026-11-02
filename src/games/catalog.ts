@@ -1,5 +1,6 @@
 // 로비 카드에 보여 줄 게임 목록(기획안 3장 정원 표). 게임 로직은 단계별로 games/<id>/ 폴더에 추가하고 def에 연결한다.
 import { alkkagi } from './alkkagi'
+import { fortress } from './fortress'
 import { omok } from './omok'
 import { territory } from './territory'
 import { tictactoe } from './tictactoe'
@@ -20,7 +21,7 @@ export const GAMES: GameInfo[] = [
   { id: 'omok', name: '오목', summary: '15×15 판, 다섯 개 먼저 잇기. 흑 3-3 금지', min: 2, max: 2, def: omok },
   { id: 'alkkagi', name: '알까기', summary: '돌을 튕겨 상대 돌을 판 밖으로', min: 2, max: 2, def: alkkagi },
   { id: 'territory', name: '땅따먹기', summary: '세 번 튕겨 집으로 돌아와 땅 넓히기', min: 2, max: 4, def: territory },
-  { id: 'fortress', name: '포트리스', summary: '각도와 파워로 포탄을 쏘는 탱크 개인전', min: 2, max: 4 },
+  { id: 'fortress', name: '포트리스', summary: '각도와 파워로 포탄을 쏘는 탱크 개인전', min: 2, max: 4, def: fortress },
 ]
 
 export function findGame(id: string) {

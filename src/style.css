@@ -660,3 +660,91 @@ input:focus-visible {
   font-size: 14px;
   text-align: center;
 }
+
+/* 포트리스 */
+.ft {
+  display: grid;
+  gap: 8px;
+}
+.ft-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+.ft-wind {
+  font-variant-numeric: tabular-nums;
+}
+.ft-board {
+  justify-self: center;
+  border-radius: 8px;
+  touch-action: none;
+}
+/* 포트리스는 가로 화면이 편하므로 세로일 때만 회전을 안내한다(기획안 7장) */
+.ft-rotate {
+  display: none;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+@media (orientation: portrait) and (max-width: 600px) {
+  .ft-rotate {
+    display: block;
+  }
+}
+.ft-controls {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr auto;
+  align-items: center;
+  gap: 8px 16px;
+}
+.ft-move {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ft-move .btn {
+  padding: 0 14px;
+  touch-action: none;
+  user-select: none;
+}
+.ft-fuel {
+  min-width: 4.5em;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.ft-slider {
+  display: grid;
+  grid-template-columns: auto 1fr 3em;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.ft-slider input {
+  width: 100%;
+  min-height: var(--tap);
+}
+.ft-slider b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 700px) {
+  .ft-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ft-slider {
+    grid-column: 1 / -1;
+  }
+}
+
+/* 휴대폰 가로 화면처럼 높이가 낮으면 위쪽 참가자 줄을 숨긴다. 이름과 차례는 게임마다 판 위에 따로 보인다 */
+@media (max-height: 500px) {
+  .game-screen .seats {
+    display: none;
+  }
+  .game-top {
+    padding: 6px 0 4px;
+  }
+}
