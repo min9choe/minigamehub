@@ -494,23 +494,43 @@ input:focus-visible {
   font-size: 14px;
   text-align: center;
 }
+/* 판은 정사각형, 칸은 내용과 상관없이 똑같은 정사각형. 글자 크기는 판 폭(cqi)을 따라가 칸을 넘지 않는다 */
 .ttt-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 8px;
   width: min(360px, 100%);
   aspect-ratio: 1;
+  container-type: inline-size;
 }
 .ttt-cell {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: clamp(40px, 14vw, 72px);
+  font-size: 20cqi;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
+  transition: opacity 0.2s;
+}
+.ttt-hint {
+  min-height: 1.5em;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+/* 다음 수에 사라질 표시 */
+.ttt-cell.is-fading {
+  opacity: 0.35;
 }
 .ttt-cell:disabled {
   cursor: default;
