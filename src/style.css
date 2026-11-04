@@ -97,7 +97,7 @@ input:focus-visible {
 .entry {
   max-width: 420px;
   margin: 0 auto;
-  padding: 12vh 16px 32px;
+  padding: 4vh 16px 32px;
 }
 .brand {
   font-size: 28px;
@@ -885,4 +885,72 @@ input:focus-visible {
   .sheet {
     align-items: center;
   }
+}
+.omok-mono {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #4a5160;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+/* 포트리스 파워 게이지: 발사 버튼을 누르고 있는 동안 차오른다 */
+.ft-gauge {
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--line);
+  overflow: hidden;
+}
+.ft-gauge-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: linear-gradient(90deg, #1f9d55, #d97a00 70%, #d64545);
+  background-size: 100% 100%;
+}
+.ft-gauge-fill.is-max {
+  background: #d64545;
+}
+.ft-gauge-last {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 3px;
+  margin-left: -1px;
+  background: var(--text);
+}
+.ft-fire {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+.ft-fire.is-charging {
+  filter: brightness(0.85);
+  transform: scale(0.97);
+}
+
+/* 힉스필드 그래픽: 입장 화면 그림, 로비 게임 카드 그림 */
+.entry-hero {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 16px;
+  border-radius: var(--radius);
+  object-fit: cover;
+  background: linear-gradient(135deg, #f6d7f0, #cfe3ff);
+}
+.game {
+  overflow: hidden;
+}
+.game-art {
+  display: block;
+  width: calc(100% + 32px);
+  margin: -16px -16px 4px;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  background: var(--line);
 }

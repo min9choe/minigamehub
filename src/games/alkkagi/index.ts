@@ -3,8 +3,10 @@
 //
 // 동기화: 쏜 사람의 화면에서 물리 계산을 끝까지 해 최종 배치(end)를 수에 담아 보낸다.
 // 받는 쪽은 같은 입력(id, vx, vy)으로 움직임을 재생해 보여 주고, 멈추면 end로 맞춘다.
+import { art, image } from '../../assets/art'
 import { sfx } from '../../sound'
 import { esc } from '../../ui/dom'
+import { drawStone } from '../shared/draw'
 import type { GameDef } from '../types'
 import { DT, MAX_SPEED, R, simulate, step, toBodies, type Body, type Disc } from '../shared/physics'
 
@@ -134,9 +136,13 @@ export const alkkagi: GameDef<State, Move> = {
 
     function draw() {
       if (!size) return
-      g.fillStyle = '#dcb468'
-      g.fillRect(0, 0, size, size)
-      g.strokeStyle = 'rgba(92, 67, 32, 0.45)'
+      const wood = image(art.boardWood, draw)
+      if (wood) g.drawImage(wood, 0, 0, size, size)
+      else {
+        g.fillStyle = '#dcb468'
+        g.fillRect(0, 0, size, size)
+      }
+      g.strokeStyle = 'rgba(74, 52, 22, 0.45)'
       g.lineWidth = 1
       g.beginPath()
       for (let i = 1; i < 19; i++) {
@@ -154,40 +160,20 @@ export const alkkagi: GameDef<State, Move> = {
       discs.forEach((d, i) => {
         if (d.out) return
         const [x, y] = toScreen(d.x, d.y)
-        g.beginPath()
-        g.arc(x, y, r, 0, Math.PI * 2)
-        g.fillStyle = d.owner === 0 ? '#151515' : '#f7f7f2'
-        g.fill()
-        g.strokeStyle = d.owner === 0 ? '#000' : '#8a8a80'
-        g.lineWidth = 1
-        g.stroke()
+        drawStone(g, x, y, r, d.owner === 0 ? 'black' : 'white')
         if (aim?.id === i) {
           g.strokeStyle = '#2f6fde'
           g.lineWidth = 3
+          g.beginPath()
+          g.arc(x, y, r + 1, 0, Math.PI * 2)
           g.stroke()
         }
       })
 
       if (aim && latest) {
-        // 당긴 반대 방향으로 날아간다. 점선은 날아갈 방향, 막대는 세기
-        const d = latest.discs[aim.id]
-        const [sx, sy] = toScreen(d.x, d.y)
+        // 날아갈 방향을 알려 주는 선은 그리지 않는다(너무 쉬워진다). 세기 막대만 보여 준다
         const v = velocityFromAim()
         const power = Math.sqrt(v.vx * v.vx + v.vy * v.vy) / MAX_SPEED
-        const [ex, ey] = toScreen(d.x + v.vx * 0.25, d.y + v.vy * 0.25)
-        g.strokeStyle = '#2f6fde'
-        g.lineWidth = 2
-        g.setLineDash([6, 6])
-        g.beginPath()
-        g.moveTo(sx, sy)
-        g.lineTo(ex, ey)
-        g.stroke()
-        g.setLineDash([])
-        g.strokeStyle = 'rgba(47, 111, 222, 0.5)'
-        g.beginPath()
-        g.moveTo(sx, sy)
-        g.lineTo(aim.px, aim.py)
-        g.stroke()
         g.fillStyle = power > 0.85 ? '#d64545' : '#2f6fde'
         g.fillRect(8, size - 14, (size - 16) * power, 6)
       }

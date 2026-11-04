@@ -1,5 +1,6 @@
 // 로비 화면: 접속 인원, 게임 카드와 줄서기, 대기 바, 접속자 목록(기획안 7장).
 import { closeInvite, currentInvite, getLobby, makeInvite, startPractice, takeNotice, takePendingQueue } from '../app'
+import { cardArt } from '../assets/art'
 import { GAMES, capacityLabel, findGame } from '../games/catalog'
 import { displayNames, getPlayerId, loadProfile } from '../identity'
 import { isConfigured, type ChannelStatus } from '../net/realtime'
@@ -53,6 +54,7 @@ export function renderLobby(root: HTMLElement) {
           ${GAMES.map(
             (g) => `
             <article class="game card" data-game="${g.id}">
+              ${cardArt[g.id] ? `<img class="game-art" src="${cardArt[g.id]}" alt="" loading="lazy" decoding="async" />` : ''}
               <div class="game-head">
                 <h3>${esc(g.name)}</h3>
                 <span class="cap">${capacityLabel(g)}</span>

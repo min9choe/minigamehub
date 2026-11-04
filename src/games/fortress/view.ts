@@ -1,4 +1,5 @@
 // 포트리스 화면: 지형과 탱크, 포탄 재생, 이동·각도·파워 조작.
+import { art, image } from '../../assets/art'
 import { sfx } from '../../sound'
 import { esc } from '../../ui/dom'
 import type { GameContext, GameView } from '../types'
@@ -6,6 +7,8 @@ import type { Move, State } from '.'
 import { BLAST, DT, FUEL, H, TANK_LIFT, fly, type Point, type Tank } from './world'
 
 const COLORS = ['#2f6fde', '#d64545', '#1f9d55', '#d97a00']
+/** 파워 게이지가 0에서 100까지 차는 시간 */
+const CHARGE_MS = 1600
 /** 지형은 이보다 높이 솟지 않으므로 위쪽 하늘은 잘라서 판을 크게 보여 준다. 포탄은 그 위로 날아갔다 돌아올 수 있다 */
 const VIEW_TOP = 120
 
@@ -25,8 +28,11 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
           <button class="btn" type="button" data-move="1" aria-label="오른쪽으로 이동">▶</button>
         </div>
         <label class="ft-slider">각도 <input type="range" min="0" max="180" step="1" data-input="angle" /> <b class="ft-angle"></b></label>
-        <label class="ft-slider">파워 <input type="range" min="10" max="100" step="1" data-input="power" /> <b class="ft-power"></b></label>
-        <button class="btn primary ft-fire" type="button" data-action="fire">발사</button>
+        <div class="ft-slider">파워
+          <div class="ft-gauge" aria-label="파워 게이지"><i class="ft-gauge-fill"></i><i class="ft-gauge-last" hidden></i></div>
+          <b class="ft-power"></b>
+        </div>
+        <button class="btn primary ft-fire" type="button" data-action="fire">꾹 눌러 발사</button>
       </div>
     </div>`
   const canvas = el.querySelector<HTMLCanvasElement>('canvas')!
@@ -35,7 +41,8 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
   const turnEl = el.querySelector<HTMLElement>('.ft-turn')!
   const fuelEl = el.querySelector<HTMLElement>('.ft-fuel')!
   const angleIn = el.querySelector<HTMLInputElement>('[data-input=angle]')!
-  const powerIn = el.querySelector<HTMLInputElement>('[data-input=power]')!
+  const gaugeFill = el.querySelector<HTMLElement>('.ft-gauge-fill')!
+  const gaugeLast = el.querySelector<HTMLElement>('.ft-gauge-last')!
   const angleOut = el.querySelector<HTMLElement>('.ft-angle')!
   const powerOut = el.querySelector<HTMLElement>('.ft-power')!
   const fireBtn = el.querySelector<HTMLButtonElement>('[data-action=fire]')!
@@ -47,7 +54,10 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
   let scale = 1
   // 내 차례에 아직 보내지 않은 조작
   let local: { turnNo: number; x: number; angle: number } | null = null
-  let power = 60
+  // 발사 버튼(또는 스페이스)을 누르고 있는 동안 파워가 차오르고, 떼는 순간 쏜다
+  let charge: { start: number } | null = null
+  let chargeRaf = 0
+  let lastPower: number | null = null
   let moveTimer = 0
   // 포탄 재생
   let anim: {
@@ -65,6 +75,17 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
 
   const me = () => (latest ? latest.order.indexOf(ctx.myId) : -1)
   const myTurn = () => !!latest && !latest.winners && latest.turn === me() && !anim
+
+  // 흙 질감은 반복 무늬로 깐다. 한 번 만들어 두고 계속 쓴다
+  let soil: CanvasPattern | null = null
+  function soilPattern(): CanvasPattern | null {
+    if (soil) return soil
+    const img = image(art.fortressSoil, draw)
+    if (!img) return null
+    soil = g.createPattern(img, 'repeat')
+    soil?.setTransform(new DOMMatrix().scale(0.35))
+    return soil
+  }
   const name = (i: number) => ctx.names.get(latest!.order[i]) ?? ''
 
   function layout() {
@@ -135,15 +156,25 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
     const s = latest
     if (!s || !width) return
     const W = s.ground.length
-    const sky = g.createLinearGradient(0, 0, 0, H)
-    sky.addColorStop(0, '#bcd8f0')
-    sky.addColorStop(1, '#eef4f8')
-    g.fillStyle = sky
-    g.fillRect(0, 0, W, H)
+    const skyImg = image(art.fortressSky, draw)
+    if (skyImg) {
+      // 보이는 하늘(VIEW_TOP~H)을 가득 채우고, 산이 아래쪽에 오도록 아래에 맞춘다
+      const viewH = H - VIEW_TOP
+      const k = Math.max(W / skyImg.naturalWidth, viewH / skyImg.naturalHeight)
+      const dw = skyImg.naturalWidth * k
+      const dh = skyImg.naturalHeight * k
+      g.drawImage(skyImg, (W - dw) / 2, H - dh, dw, dh)
+    } else {
+      const sky = g.createLinearGradient(0, 0, 0, H)
+      sky.addColorStop(0, '#bcd8f0')
+      sky.addColorStop(1, '#eef4f8')
+      g.fillStyle = sky
+      g.fillRect(0, 0, W, H)
+    }
 
     const ground = anim ? anim.ground : s.ground
     const tanks = anim ? anim.tanks : s.tanks
-    g.fillStyle = '#7d9b4c'
+    g.fillStyle = soilPattern() ?? '#8a5a32'
     g.beginPath()
     g.moveTo(0, H)
     for (let x = 0; x < W; x++) g.lineTo(x, ground[x])
@@ -151,15 +182,22 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
     g.lineTo(W, H)
     g.closePath()
     g.fill()
-    g.strokeStyle = '#5b7a34'
-    g.lineWidth = 2
-    g.beginPath()
-    for (let x = 0; x < W; x++) {
-      if (ground[x] >= H) continue
-      g.moveTo(x, ground[x])
-      g.lineTo(x + 1, ground[Math.min(W - 1, x + 1)])
+    // 땅 윗면은 풀로 덮는다
+    const surface = (width: number, color: string, lift: number) => {
+      g.strokeStyle = color
+      g.lineWidth = width
+      g.lineCap = 'round'
+      g.beginPath()
+      for (let x = 0; x < W; x++) {
+        if (ground[x] >= H) continue
+        g.moveTo(x, ground[x] + lift)
+        g.lineTo(x + 1, ground[Math.min(W - 1, x + 1)] + lift)
+      }
+      g.stroke()
+      g.lineCap = 'butt'
     }
-    g.stroke()
+    surface(9, '#3f8a2a', 2)
+    surface(3, '#8fd14f', -1)
 
     tanks.forEach((t, i) => {
       if (anim && i === anim.shooter) return drawTank(ground, t, i, t.angle)
@@ -198,16 +236,55 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
     turnEl.innerHTML = s.winners ? '' : myTurn() ? '<b>내 차례</b>' : `${esc(name(s.turn))} 차례`
     const can = myTurn() && !!local
     for (const b of moveBtns) b.disabled = !can
-    angleIn.disabled = powerIn.disabled = fireBtn.disabled = !can
+    angleIn.disabled = fireBtn.disabled = !can
     if (local) {
       angleIn.value = String(local.angle)
       fuelEl.textContent = `이동 ${FUEL - Math.abs(local.x - s.tanks[me()].x)}`
     } else {
       fuelEl.textContent = ''
     }
-    powerIn.value = String(power)
     angleOut.textContent = `${angleIn.value}°`
-    powerOut.textContent = String(power)
+    updateGauge()
+  }
+
+  function chargePower() {
+    return charge ? Math.min(100, Math.round(((performance.now() - charge.start) / CHARGE_MS) * 100)) : 0
+  }
+
+  function updateGauge() {
+    const p = chargePower()
+    gaugeFill.style.width = `${p}%`
+    gaugeFill.classList.toggle('is-max', p >= 100)
+    gaugeLast.hidden = lastPower === null
+    if (lastPower !== null) gaugeLast.style.left = `${lastPower}%`
+    powerOut.textContent = charge ? String(p) : lastPower === null ? '' : String(lastPower)
+  }
+
+  function startCharge() {
+    if (!myTurn() || !local || charge) return
+    charge = { start: performance.now() }
+    fireBtn.classList.add('is-charging')
+    const tick = () => {
+      if (!charge) return
+      updateGauge()
+      chargeRaf = requestAnimationFrame(tick)
+    }
+    chargeRaf = requestAnimationFrame(tick)
+  }
+
+  function stopCharge() {
+    charge = null
+    cancelAnimationFrame(chargeRaf)
+    fireBtn.classList.remove('is-charging')
+    updateGauge()
+  }
+
+  /** 손을 떼면 그때까지 찬 파워로 쏜다 */
+  function releaseCharge() {
+    if (!charge) return
+    const p = chargePower()
+    stopCharge()
+    fire(p)
   }
 
   function stepMove(dir: number) {
@@ -230,9 +307,11 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
     clearInterval(moveTimer)
   }
 
-  function fire() {
+  function fire(power: number) {
     const s = latest
     if (!s || !local || !myTurn()) return
+    lastPower = power // 다음 턴에 게이지에 지난 파워를 표시해 준다
+    updateGauge()
     const shot = { x: local.x, angle: local.angle, power, wind: s.wind }
     const tanks = s.tanks.map((t, i) => (i === me() ? { ...t, x: local!.x } : t))
     const { impact } = fly(s.ground, tanks, me(), shot)
@@ -281,7 +360,6 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
   const onInput = (e: Event) => {
     const t = e.target as HTMLInputElement
     if (t === angleIn && local) local.angle = Number(angleIn.value)
-    if (t === powerIn) power = Number(powerIn.value)
     updateControls()
     draw()
   }
@@ -291,20 +369,33 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
       e.preventDefault()
       startMove(Number(b.dataset.move))
     }
+    if ((e.target as HTMLElement).closest('[data-action=fire]') && !fireBtn.disabled) {
+      e.preventDefault()
+      try {
+        fireBtn.setPointerCapture(e.pointerId) // 손가락이 버튼 밖으로 밀려도 떼는 순간까지 따라간다
+      } catch {
+        // 붙잡지 못해도 버튼 위에서 떼면 쏜다
+      }
+      startCharge()
+    }
   }
-  const onClick = (e: Event) => {
-    if ((e.target as HTMLElement).closest('[data-action=fire]')) fire()
-  }
-  // 키보드: ←→ 이동, ↑↓ 각도, 스페이스 발사
+  const onFireUp = () => releaseCharge()
+  // 키보드: ←→ 이동, ↑↓ 각도, 스페이스를 누르고 있다가 떼면 발사
   const onKey = (e: KeyboardEvent) => {
     if (!myTurn() || !local || (e.target as HTMLElement).tagName === 'INPUT') return
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') stepMove(e.key === 'ArrowLeft' ? -1 : 1)
     else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') local.angle = Math.max(0, Math.min(180, local.angle + (e.key === 'ArrowUp' ? 1 : -1)))
-    else if (e.key === ' ') fire()
-    else return
+    else if (e.key === ' ') {
+      if (!e.repeat) startCharge()
+    } else return
     e.preventDefault()
     updateControls()
     draw()
+  }
+  const onKeyUp = (e: KeyboardEvent) => {
+    if (e.key !== ' ' || !charge) return
+    e.preventDefault()
+    releaseCharge()
   }
   const onVisibility = () => {
     if (document.hidden && anim) endAnim()
@@ -312,9 +403,12 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
 
   el.addEventListener('input', onInput)
   el.addEventListener('pointerdown', onPointerDown)
-  el.addEventListener('click', onClick)
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave'] as const) el.addEventListener(ev, stopMove)
+  fireBtn.addEventListener('pointerup', onFireUp)
+  fireBtn.addEventListener('pointercancel', stopCharge)
+  fireBtn.addEventListener('contextmenu', (e) => e.preventDefault()) // 휴대폰에서 길게 누를 때 메뉴가 뜨지 않게
   window.addEventListener('keydown', onKey)
+  window.addEventListener('keyup', onKeyUp)
   document.addEventListener('visibilitychange', onVisibility)
   const ro = new ResizeObserver(layout)
   ro.observe(el)
@@ -329,13 +423,16 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
         shownShot = s.shotNo
       }
       syncLocal(s)
+      if (charge && !myTurn()) stopCharge() // 누르고 있는 사이 시간이 다 되면 취소
       layout()
       updateControls()
       if (!anim) draw()
     },
     destroy() {
       stopMove()
+      stopCharge()
       cancelAnimationFrame(raf)
+      window.removeEventListener('keyup', onKeyUp)
       clearTimeout(animTimer)
       ro.disconnect()
       window.removeEventListener('resize', layout)

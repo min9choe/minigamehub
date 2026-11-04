@@ -1,12 +1,15 @@
 // 땅따먹기 화면: 땅 칠하기, 이번 턴 경로, 새총 입력, 다른 사람이 튕긴 움직임 재생.
+import { art, image } from '../../assets/art'
 import { sfx } from '../../sound'
 import { esc } from '../../ui/dom'
 import { DT, MAX_SPEED, step, toBodies, type Body } from '../shared/physics'
 import type { GameContext, GameView } from '../types'
 import { FLICKS, TURNS_EACH, flick, type Move, type State } from '.'
-import { G, areaOf, houseCells, houseCenter, type Point } from './rules'
+import { G, areaOf, houseCenter, houseRect, type Point } from './rules'
 
 const COLORS = ['#2f6fde', '#d64545', '#1f9d55', '#d97a00']
+// 땅 색: 땅 층에서는 불투명하게 칠하고, 층 전체를 반투명하게 모래 위에 얹는다
+const TINTS = ['#4f86ee', '#e0574f', '#2fae63', '#ef9a2e']
 const STONE_R = 0.018
 const MAX_PULL = 0.3 // 판 길이의 0.3만큼 당기면 최대 세기
 
@@ -21,6 +24,7 @@ export function mountTerritory(el: HTMLElement, ctx: GameContext<Move>): GameVie
   const hint = el.querySelector<HTMLElement>('.terr-hint')!
   const canvas = el.querySelector<HTMLCanvasElement>('canvas')!
   const g = canvas.getContext('2d')!
+  const landLayer = document.createElement('canvas')
 
   let latest: State | null = null
   let size = 0
@@ -65,32 +69,49 @@ export function mountTerritory(el: HTMLElement, ctx: GameContext<Move>): GameVie
 
   function draw() {
     if (!size) return
-    g.fillStyle = '#efe9d8'
-    g.fillRect(0, 0, size, size)
+    const sand = image(art.groundSand, draw)
+    if (sand) g.drawImage(sand, 0, 0, size, size)
+    else {
+      g.fillStyle = '#efe9d8'
+      g.fillRect(0, 0, size, size)
+    }
     const s = latest
     if (!s) return
 
-    const c = size / G
-    g.globalAlpha = 0.45
-    // 칸 경계를 정수 픽셀로 맞춰 이웃 칸과 겹치지 않게 칠한다(겹치면 반투명 색이 진해져 줄무늬가 생긴다)
-    s.land.forEach((owner, i) => {
-      if (owner < 0) return
-      const x0 = Math.round((i % G) * c)
-      const y0 = Math.round(Math.floor(i / G) * c)
-      g.fillStyle = COLORS[owner]
-      g.fillRect(x0, y0, Math.round(((i % G) + 1) * c) - x0, Math.round((Math.floor(i / G) + 1) * c) - y0)
-    })
-    g.globalAlpha = 1
+    // 땅은 따로 그린 층을 반투명하게 모래 위에 얹어 질감이 비치게 한다(겹친 곳의 색이 섞이지 않도록 층에서는 불투명하게 칠한다)
+    const lg = landLayer.getContext('2d')!
+    if (landLayer.width !== canvas.width) {
+      landLayer.width = canvas.width
+      landLayer.height = canvas.height
+    }
+    lg.setTransform(canvas.width / size, 0, 0, canvas.height / size, 0, 0)
+    lg.clearRect(0, 0, size, size)
 
-    // 집은 진하게 테두리를 친다
+    // 땅은 지나온 경로 도형 그대로 칠한다. 겹친 곳은 먼저 얻은 사람 땅이므로, 나중에 얻은 도형부터 그리고
+    // 먼저 얻은 도형을 위에 덮는다. 집은 맨 처음 땅이라 가장 위에 그린다
+    for (let i = s.claims.length - 1; i >= 0; i--) {
+      const { player, shape } = s.claims[i]
+      lg.fillStyle = TINTS[player]
+      lg.beginPath()
+      lg.moveTo(sx(shape[0]), sy(shape[0]))
+      for (const p of shape.slice(1)) lg.lineTo(sx(p), sy(p))
+      lg.closePath()
+      lg.fill('evenodd') // 꼬인 도형도 판정(even-odd)과 같은 모양으로 칠한다
+    }
     s.corners.forEach((corner, p) => {
-      const cells = houseCells(corner)
-      const x0 = (cells[0] % G) * c
-      const y0 = Math.floor(cells[0] / G) * c
-      const side = Math.sqrt(cells.length) * c
+      const r = houseRect(corner)
+      lg.fillStyle = TINTS[p]
+      lg.fillRect(r.x * size, r.y * size, r.size * size, r.size * size)
+    })
+    g.save()
+    g.globalAlpha = 0.62
+    g.drawImage(landLayer, 0, 0, size, size)
+    g.restore()
+    s.corners.forEach((corner, p) => {
+      const r = houseRect(corner)
       g.strokeStyle = COLORS[p]
       g.lineWidth = s.out.includes(p) ? 1 : 3
-      g.strokeRect(x0 + 1.5, y0 + 1.5, side - 3, side - 3)
+      g.strokeRect(r.x * size + 1.5, r.y * size + 1.5, r.size * size - 3, r.size * size - 3)
     })
 
     // 방금 끝난 턴의 도형, 이번 턴에 지나온 경로

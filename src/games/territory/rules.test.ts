@@ -70,6 +70,37 @@ describe('턴 진행', () => {
     expect(s.turn).toBe(1)
   })
 
+  it('성공하면 지나온 도형이 땅 기록(claims)에 남는다', () => {
+    let s: State = start()
+    const home = houseCenter(0)
+    s = applyFlick(s, stop(0.5, 0.88))
+    s = applyFlick(s, stop(0.5, 0.5))
+    s = applyFlick(s, stop(home.x, home.y))
+    expect(s.claims).toEqual([{ player: 0, shape: [home, P(0.5, 0.88), P(0.5, 0.5), home] }])
+  })
+
+  it('3번째에 예전에 얻은 내 땅으로 들어와도 성공이다(도형 가장자리처럼 칸으로는 안 잡히는 자리 포함)', () => {
+    let s: State = start()
+    // 0번이 예전에 얻은 삼각형. 칸 기록에는 없는 가장자리 자리로 돌아온다고 친다
+    s = { ...s, claims: [{ player: 0, shape: [P(0.3, 0.3), P(0.7, 0.3), P(0.3, 0.7)] }] }
+    expect(s.land[cellAt(P(0.35, 0.35))]).toBe(-1)
+    s = applyFlick(s, stop(0.5, 0.88))
+    s = applyFlick(s, stop(0.6, 0.6))
+    s = applyFlick(s, stop(0.35, 0.35))
+    expect(s.lastTurn?.ok).toBe(true)
+  })
+
+  it('내 도형 안이어도 그 자리가 남의 칸이면 실패다', () => {
+    let s: State = start()
+    const land = [...s.land]
+    land[cellAt(P(0.35, 0.35))] = 1
+    s = { ...s, land, claims: [{ player: 0, shape: [P(0.3, 0.3), P(0.7, 0.3), P(0.3, 0.7)] }] }
+    s = applyFlick(s, stop(0.5, 0.88))
+    s = applyFlick(s, stop(0.6, 0.6))
+    s = applyFlick(s, stop(0.35, 0.35))
+    expect(s.lastTurn?.ok).toBe(false)
+  })
+
   it('판 밖으로 나가면 바로 턴이 끝난다', () => {
     let s: State = start()
     s = applyFlick(s, { vx: 0, vy: 0, end: { x: 0, y: 0, out: true } })

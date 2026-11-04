@@ -4,7 +4,7 @@
 // 동기화: 쏜 사람이 정지 위치(end)까지 계산해 수에 담아 보낸다. 면적은 이 정지 위치로만 계산하므로 모든 화면에서 같다.
 import type { GameDef } from '../types'
 import { MAX_SPEED, simulate } from '../shared/physics'
-import { areaOf, cellAt, claim, cornersFor, houseCenter, initialLand, type Point } from './rules'
+import { areaOf, cellAt, claim, cornersFor, houseCenter, initialLand, insideHouse, insidePolygon, type Point } from './rules'
 import { mountTerritory } from './view'
 
 export const TURNS_EACH = 8
@@ -13,7 +13,10 @@ export const FLICKS = 3
 export type State = {
   order: string[]
   corners: number[]
+  /** 칸마다 주인. 면적(점수)은 이 칸 수로 센다 */
   land: number[]
+  /** 성공한 턴마다 얻은 도형(경로 그대로), 얻은 순서대로. 화면은 칸 대신 이 도형으로 땅을 그린다 */
+  claims: { player: number; shape: Point[] }[]
   /** 지금 튕기는 사람(order 번호) */
   turn: number
   /** 이번 턴 출발점 뒤로 멈춘 자리들 */
@@ -65,9 +68,22 @@ export function applyFlick(s: State, move: Move): State {
   if (stops.length < FLICKS) return { ...base, stops, stone: end }
 
   const shape = [start, ...stops]
-  if (s.land[cellAt(end)] !== s.turn) return endTurn(base, { player: s.turn, ok: false, gained: 0, shape })
+  if (!ownsAt(s, s.turn, end)) return endTurn(base, { player: s.turn, ok: false, gained: 0, shape })
   const { land, gained } = claim(s.land, shape, s.turn)
-  return endTurn({ ...base, land }, { player: s.turn, ok: true, gained, shape })
+  const claims = [...s.claims, { player: s.turn, shape }]
+  return endTurn({ ...base, land, claims }, { player: s.turn, ok: true, gained, shape })
+}
+
+/**
+ * 이 자리가 player의 땅인가: 집 안, 내 칸, 또는 예전에 얻은 내 도형 안(남의 칸이 아니면).
+ * 도형 가장자리는 칸 중심이 바깥이라 칸으로는 안 잡히는 자리가 있어서 도형으로도 확인한다.
+ */
+export function ownsAt(s: Pick<State, 'land' | 'corners' | 'claims'>, player: number, p: Point): boolean {
+  const owner = s.land[cellAt(p)]
+  if (owner === player) return true
+  if (insideHouse(s.corners[player], p)) return true
+  if (owner !== -1) return false
+  return s.claims.some((c) => c.player === player && insidePolygon(p.x, p.y, c.shape))
 }
 
 export const territory: GameDef<State, Move> = {
@@ -81,6 +97,7 @@ export const territory: GameDef<State, Move> = {
       order,
       corners,
       land: initialLand(corners),
+      claims: [],
       turn: first,
       stops: [],
       stone: houseCenter(corners[first]),

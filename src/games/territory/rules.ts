@@ -26,6 +26,17 @@ export function houseCenter(corner: number): Point {
   return { x: (cx + HOUSE / 2) / G, y: (cy + HOUSE / 2) / G }
 }
 
+/** 집이 차지하는 사각형(판 좌표 0~1) */
+export function houseRect(corner: number): { x: number; y: number; size: number } {
+  const [cx, cy] = houseOrigin(corner)
+  return { x: cx / G, y: cy / G, size: HOUSE / G }
+}
+
+export function insideHouse(corner: number, p: Point): boolean {
+  const r = houseRect(corner)
+  return p.x >= r.x && p.x <= r.x + r.size && p.y >= r.y && p.y <= r.y + r.size
+}
+
 export function houseCells(corner: number): number[] {
   const [cx, cy] = houseOrigin(corner)
   const cells: number[] = []

@@ -1,6 +1,8 @@
 // 오목(기획안 4장): 15×15 판, 흑 선공, 5목 이상 승리, 흑만 3-3 금수. 판정은 rules.ts에 있다.
+import { art, image } from '../../assets/art'
 import { sfx } from '../../sound'
 import { esc } from '../../ui/dom'
+import { drawStone } from '../shared/draw'
 import type { GameDef } from '../types'
 import { BLACK, EMPTY, N, WHITE, fiveLine, forbiddenPoints, idx, isForbidden, type Stone } from './rules'
 
@@ -17,6 +19,12 @@ export type State = {
   draw: boolean
 }
 export type Move = { x: number; y: number }
+
+/** 판의 절반 이상이 차면 '단색 모드': 모든 돌이 같은 색으로 보여 누가 둔 돌인지 기억해야 한다(빠른 승부를 위해) */
+export const MONO_AT = Math.ceil((N * N) / 2)
+const MONO_COLOR = '#4a5160'
+/** 대국이 끝나면 다시 원래 색으로 보여 준다 */
+export const monoMode = (s: State) => !over(s) && s.stones.filter((st) => st !== EMPTY).length >= MONO_AT
 
 const colorOf = (s: State, player: number): Stone => (player === s.black ? BLACK : WHITE)
 const playerOf = (s: State, color: Stone) => (color === BLACK ? s.black : 1 - s.black)
@@ -119,9 +127,13 @@ export const omok: GameDef<State, Move> = {
       if (!size) return
       const s = latest
       const c = cell()
-      g.fillStyle = '#dcb468'
-      g.fillRect(0, 0, size, size)
-      g.strokeStyle = '#5c4320'
+      const wood = image(art.boardWood, draw)
+      if (wood) g.drawImage(wood, 0, 0, size, size)
+      else {
+        g.fillStyle = '#dcb468'
+        g.fillRect(0, 0, size, size)
+      }
+      g.strokeStyle = '#4a3416'
       g.lineWidth = 1
       g.beginPath()
       for (let i = 0; i < N; i++) {
@@ -140,17 +152,10 @@ export const omok: GameDef<State, Move> = {
       if (!s) return
 
       const r = c * 0.45
+      const mono = monoMode(s)
       s.stones.forEach((st, p) => {
         if (st === EMPTY) return
-        const x = pos(p % N)
-        const y = pos(Math.floor(p / N))
-        g.beginPath()
-        g.arc(x, y, r, 0, Math.PI * 2)
-        g.fillStyle = st === BLACK ? '#151515' : '#f7f7f2'
-        g.fill()
-        g.strokeStyle = st === BLACK ? '#000' : '#8a8a80'
-        g.lineWidth = 1
-        g.stroke()
+        drawStone(g, pos(p % N), pos(Math.floor(p / N)), r, mono ? 'mono' : st === BLACK ? 'black' : 'white')
       })
 
       // 흑 차례에는 금수 자리를 X로 표시한다
@@ -181,7 +186,7 @@ export const omok: GameDef<State, Move> = {
         g.globalAlpha = 0.5
         g.beginPath()
         g.arc(pos(ghost % N), pos(Math.floor(ghost / N)), r, 0, Math.PI * 2)
-        g.fillStyle = myColor() === BLACK ? '#151515' : '#f7f7f2'
+        g.fillStyle = monoMode(s) ? MONO_COLOR : myColor() === BLACK ? '#151515' : '#f7f7f2'
         g.fill()
         g.globalAlpha = 1
       }
@@ -206,11 +211,13 @@ export const omok: GameDef<State, Move> = {
       const mine = myColor()
       const colorName = mine === BLACK ? '흑 ●' : mine === WHITE ? '백 ○' : ''
       const turnName = esc(ctx.names.get(s.order[playerOf(s, s.toMove)]) ?? '')
-      info.innerHTML = mine
-        ? `나는 <b>${colorName}</b> · ${over(s) ? '대국 종료' : myTurn() ? '내 차례' : `${turnName} 차례`}`
-        : over(s)
-          ? '대국 종료'
-          : `${turnName} 차례`
+      const monoTag = monoMode(s) ? ' <span class="omok-mono">단색 모드</span>' : ''
+      info.innerHTML =
+        (mine
+          ? `나는 <b>${colorName}</b> · ${over(s) ? '대국 종료' : myTurn() ? '내 차례' : `${turnName} 차례`}`
+          : over(s)
+            ? '대국 종료'
+            : `${turnName} 차례`) + monoTag
       hint.textContent = myTurn()
         ? ghost === null
           ? mine === BLACK
