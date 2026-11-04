@@ -230,11 +230,49 @@ export function createRoom(opts: {
     awayTimers.clear()
   }
 
+  // 방장만 아는 비밀(숫자 야구 정답). 상태에는 넣지 않고, 방장이 새로고침해도 남도록 이 탭에만 저장한다
+  const secretKey = (r: number) => `mgh.secret:${info.roomId}:${r}`
+  const secrets = new Map<number, unknown>()
+  function getSecret(): unknown {
+    if (secrets.has(round)) return secrets.get(round)
+    try {
+      const raw = sessionStorage.getItem(secretKey(round))
+      if (raw !== null) {
+        secrets.set(round, JSON.parse(raw))
+        return secrets.get(round)
+      }
+    } catch {
+      // 저장소를 못 쓰면 메모리에 있는 것만 쓴다
+    }
+    return undefined
+  }
+  function keepSecret(value: unknown) {
+    secrets.set(round, value)
+    try {
+      sessionStorage.setItem(secretKey(round), JSON.stringify(value))
+    } catch {
+      // 위와 같다
+    }
+  }
+  /** 방장이 수를 알리기 전에 비밀로 판정을 붙인다. 비밀을 모르는 방장(이어받은 사람)은 판정하지 않는다 */
+  function judged(by: string, move: unknown): unknown {
+    if (!def.host) return move
+    const secret = getSecret()
+    if (secret === undefined) return null
+    return def.host.judge(state, by, move, secret)
+  }
+
   function startRound() {
     clearTimeout(entryTimer)
     const msg: StartMsg = { round: round + 1, seed: Math.floor(Math.random() * 2 ** 31), order: present() }
     void ch.send('start', msg)
     beginRound(msg)
+    if (def.host) {
+      // 비밀을 만들고, 모두에게는 지문 같은 공개용 값만 첫 사건으로 알린다
+      const { secret, move } = def.host.setup(state)
+      keepSecret(secret)
+      hostApply({ v, kind: 'move', by: me, move })
+    }
   }
 
   function beginRound(p: StartMsg) {
@@ -274,6 +312,8 @@ export function createRoom(opts: {
     if (phase !== 'playing') return
     const who = def.turnOf(state)
     if (!who) return
+    // 비밀을 모르는 방장은 판정을 못 하니 시간도 재지 않는다(원래 방장이 돌아오거나 30초 뒤 기권 처리될 때까지)
+    if (def.host && getSecret() === undefined) return
     const atV = v
     turnTimer = window.setTimeout(() => {
       if (v !== atV || phase !== 'playing' || !iAmHost()) return
@@ -328,7 +368,10 @@ export function createRoom(opts: {
   function onIntent(p: GameEvent & { round: number }) {
     if (!iAmHost() || p.round !== round) return
     if (p.kind === 'forfeit') hostApply({ v, kind: 'forfeit', by: p.by })
-    else if (p.kind === 'move' && p.v === v) hostApply({ v, kind: 'move', by: p.by, move: p.move })
+    else if (p.kind === 'move' && p.v === v) {
+      const move = judged(p.by, p.move)
+      if (move !== null) hostApply({ v, kind: 'move', by: p.by, move })
+    }
     else if (p.kind === 'move' && p.v < v) sendSync() // 이미 반영된 수를 다시 보냈다면 결과를 놓친 것이다
   }
 
@@ -436,8 +479,13 @@ export function createRoom(opts: {
     },
     play(move: unknown) {
       if (phase !== 'playing' || state === null || pending || def.turnOf(state) !== me) return
-      if (def.apply(state, me, move) === null) return
-      if (iAmHost()) return hostApply({ v, kind: 'move', by: me, move })
+      // 비밀을 쓰는 게임은 판정이 붙어야 규칙 검사가 되므로 미리 검사하지 않는다(방장이 판정할 때 검사한다)
+      if (!def.host && def.apply(state, me, move) === null) return
+      if (iAmHost()) {
+        const m = judged(me, move)
+        if (m !== null) hostApply({ v, kind: 'move', by: me, move: m })
+        return
+      }
       pending = { round, v, move }
       const sendIntent = () => {
         if (!pending) return clearInterval(intentTimer)
@@ -446,7 +494,8 @@ export function createRoom(opts: {
           const p = pending
           pending = null
           clearInterval(intentTimer)
-          if (p.round === round) hostApply({ v: p.v, kind: 'move', by: me, move: p.move })
+          const m = p.round === round ? judged(me, p.move) : null
+          if (m !== null) hostApply({ v: p.v, kind: 'move', by: me, move: m })
           return
         }
         void ch.send('intent', { round: pending.round, v: pending.v, kind: 'move', by: me, move: pending.move })

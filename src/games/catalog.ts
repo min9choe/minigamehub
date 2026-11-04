@@ -1,5 +1,7 @@
 // 로비 카드에 보여 줄 게임 목록(기획안 3장 정원 표). 게임 로직은 단계별로 games/<id>/ 폴더에 추가하고 def에 연결한다.
 import { alkkagi } from './alkkagi'
+import { baseball } from './baseball'
+import { baseballBot } from './baseball/bot'
 import { curling } from './curling'
 import { dots } from './dots'
 import { dotsBot } from './dots/bot'
@@ -37,6 +39,7 @@ export const GAMES: GameInfo[] = [
   { id: 'reversi', name: '리버시', summary: '끼운 돌을 뒤집어 판을 더 많이 차지하기', min: 2, max: 2, def: reversi, bot: reversiBot },
   { id: 'dots', name: '점 잇기', summary: '선을 그어 상자를 닫으면 내 것, 한 번 더', min: 2, max: 4, def: dots, bot: dotsBot },
   { id: 'curling', name: '컬링', summary: '얼음 위로 돌을 밀어 과녁 가운데에 가깝게', min: 2, max: 2, def: curling },
+  { id: 'baseball', name: '숫자 야구', summary: '아무도 모르는 4자리를 번갈아 불러 먼저 맞히기', min: 2, max: 2, def: baseball, bot: baseballBot },
 ]
 
 export function findGame(id: string) {

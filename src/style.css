@@ -1125,3 +1125,99 @@ input:focus-visible {
 .yt-pending .btn {
   padding: 0 14px;
 }
+
+/* 숫자 야구 */
+.bb {
+  display: grid;
+  gap: 10px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.bb-info {
+  text-align: center;
+  font-size: 15px;
+}
+.bb-history {
+  display: grid;
+  gap: 4px;
+  max-height: 260px;
+  margin: 0;
+  padding: 8px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  list-style: none;
+}
+.bb-history:empty::before {
+  content: '아직 부른 숫자가 없어요.';
+  color: var(--muted);
+  font-size: 14px;
+}
+.bb-history li {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.bb-history li i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.bb-history code,
+.bb-note code {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+.bb-out {
+  color: var(--muted);
+}
+.bb-bad {
+  color: var(--bad);
+}
+.bb-slots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.bb-slots span {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 56px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 28px;
+  font-weight: 700;
+}
+.bb-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.bb-pad .btn {
+  font-size: 20px;
+}
+.bb-pad [data-action='send'] {
+  font-size: 15px;
+}
+.bb-note {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  word-break: break-all;
+}
+.bb-note code {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.bb-note code:first-child {
+  font-size: 16px;
+  letter-spacing: 0.15em;
+}

@@ -31,4 +31,16 @@ export interface GameDef<S, M> {
   eliminate(state: S, id: string): S
   result(state: S): Result | null
   mount(el: HTMLElement, ctx: GameContext<M>): GameView<S>
+  /**
+   * 방장만 아는 값(비밀)을 쓰는 게임(숫자 야구). 이 함수들은 방장 브라우저에서만 불리고, 비밀은 상태에 넣지 않는다.
+   * 다른 사람 화면에는 방장이 판정해 붙인 결과만 전해진다.
+   */
+  host?: HostSecret<S, M>
+}
+
+export interface HostSecret<S, M> {
+  /** 판이 시작될 때 비밀을 만든다. move는 방장이 첫 사건으로 모두에게 알린다(예: 정답의 지문) */
+  setup(state: S): { secret: unknown; move: M }
+  /** 받은 수에 비밀로 판정 결과를 붙인다. 규칙에 어긋나면 null */
+  judge(state: S, by: string, move: M, secret: unknown): M | null
 }

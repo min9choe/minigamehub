@@ -9,6 +9,7 @@ import fortressSky from './img/fortress-sky.webp'
 import fortressSoil from './img/fortress-soil.webp'
 import groundSand from './img/ground-sand.webp'
 import hero from './img/hero.webp'
+import cardBaseball from './img/card-baseball.webp'
 import cardCurling from './img/card-curling.webp'
 import cardDots from './img/card-dots.webp'
 import cardReversi from './img/card-reversi.webp'
@@ -28,6 +29,7 @@ export const cardArt: Record<string, string> = {
   dots: cardDots,
   curling: cardCurling,
   yut: cardYut,
+  baseball: cardBaseball,
 }
 
 const cache = new Map<string, HTMLImageElement>()

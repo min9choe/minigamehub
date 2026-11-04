@@ -35,6 +35,7 @@ export function createPracticeRoom(opts: {
   const forfeited = new Set<string>()
   const rematch = new Set<string>()
   let timer = 0
+  let secret: unknown = null
 
   function startRound() {
     round += 1
@@ -42,6 +43,12 @@ export function createPracticeRoom(opts: {
     result = null
     forfeited.clear()
     rematch.clear()
+    // 비밀을 쓰는 게임(숫자 야구)은 이 브라우저가 방장 노릇을 한다
+    if (opts.def.host) {
+      const { secret: s, move } = opts.def.host.setup(state)
+      secret = s
+      state = opts.def.apply(state, me, move) ?? state
+    }
     phase = 'countdown'
     countdownEnd = Date.now() + COUNTDOWN
     clearTimeout(timer)
@@ -54,7 +61,9 @@ export function createPracticeRoom(opts: {
     emit()
   }
 
-  function apply(by: string, move: unknown) {
+  function apply(by: string, raw: unknown) {
+    const move = opts.def.host ? opts.def.host.judge(state, by, raw, secret) : raw
+    if (move === null) return false
     const next = opts.def.apply(state, by, move)
     if (next === null) return false
     state = next
