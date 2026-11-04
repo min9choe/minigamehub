@@ -134,7 +134,8 @@ export const dots: GameDef<State, Move> = {
 
     const me = () => (latest ? latest.order.indexOf(ctx.myId) : -1)
     const myTurn = () => !!latest && !latest.winners && latest.turn === me()
-    const gap = () => size / (latest!.cols + 1)
+    // 점은 cols+1개이고 양쪽에 한 칸씩 여백을 두므로 판을 cols+2칸으로 나눈다(가장자리 점이 잘리지 않게)
+    const gap = () => size / (latest!.cols + 2)
     const pt = (r: number, c: number): [number, number] => [gap() * (c + 1), gap() * (r + 1)]
 
     function layout() {

@@ -167,8 +167,12 @@ export const baseball: GameDef<State, Move> = {
 
       history.innerHTML = s.history
         .map((h) => {
-          const res = h.strike === 0 && h.ball === 0 ? '<b class="bb-out">아웃</b>' : `<b>${h.strike}S</b> <b>${h.ball}B</b>`
-          return `<li><i style="background:${COLORS[h.by]}"></i><span>${name(h.by)}</span><code>${h.guess}</code>${res}</li>`
+          // 판정은 한 칸에 모아 넣는다(스트라이크·볼 칩 두 개 또는 아웃 하나)
+          const res =
+            h.strike === 0 && h.ball === 0
+              ? '<b class="bb-chip is-out">아웃</b>'
+              : `<b class="bb-chip is-s">${h.strike}S</b><b class="bb-chip is-b">${h.ball}B</b>`
+          return `<li><i style="background:${COLORS[h.by]}"></i><span>${name(h.by)}</span><code>${h.guess}</code><span class="bb-res">${res}</span></li>`
         })
         .join('')
       history.scrollTop = history.scrollHeight
