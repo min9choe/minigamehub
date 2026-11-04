@@ -9,8 +9,14 @@ import fortressSky from './img/fortress-sky.webp'
 import fortressSoil from './img/fortress-soil.webp'
 import groundSand from './img/ground-sand.webp'
 import hero from './img/hero.webp'
+import cardCurling from './img/card-curling.webp'
+import cardDots from './img/card-dots.webp'
+import cardReversi from './img/card-reversi.webp'
+import cardYut from './img/card-yut.webp'
+import ice from './img/ice.webp'
+import yutBoard from './img/yut-board.webp'
 
-export const art = { boardWood, groundSand, fortressSky, fortressSoil, hero }
+export const art = { boardWood, groundSand, fortressSky, fortressSoil, hero, ice, yutBoard }
 
 export const cardArt: Record<string, string> = {
   tictactoe: cardTictactoe,
@@ -18,6 +24,10 @@ export const cardArt: Record<string, string> = {
   alkkagi: cardAlkkagi,
   territory: cardTerritory,
   fortress: cardFortress,
+  reversi: cardReversi,
+  dots: cardDots,
+  curling: cardCurling,
+  yut: cardYut,
 }
 
 const cache = new Map<string, HTMLImageElement>()

@@ -75,6 +75,7 @@ export function startPractice(gameId: string) {
   if (!game?.def || !game.bot || !profile || room) return
   void practice?.leave()
   practice = createPracticeRoom({ gameId, def: game.def, bot: game.bot, nick: profile.nick })
+  if (import.meta.env.DEV) Object.assign(window, { __mghRoom: practice })
   go('/game')
 }
 

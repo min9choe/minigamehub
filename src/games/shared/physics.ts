@@ -1,4 +1,4 @@
-// 돌 튕기기 물리(알까기, 땅따먹기 공용). 판은 가로세로 1인 정사각형이고, 돌 중심이 판 밖으로 나가면 떨어진다.
+// 돌 튕기기 물리(알까기, 땅따먹기, 컬링 공용). 판은 가로세로 1인 정사각형이고, 돌 중심이 판 밖으로 나가면 떨어진다.
 // 같은 입력이면 어느 기기에서든 거의 같은 결과가 나오도록 고정 간격으로 계산한다.
 // 그래도 기기마다 미세한 오차가 날 수 있으므로, 최종 위치는 쏜 사람이 계산한 값으로 모두 맞춘다.
 
@@ -8,8 +8,12 @@ export type Body = Disc & { vx: number; vy: number }
 export const R = 0.042 // 돌 반지름
 export const MAX_SPEED = 2.4 // 가장 세게 튕길 때 속도(판 길이/초)
 export const DT = 1 / 120
-const DECEL = 1.1 // 마찰로 줄어드는 속도(판 길이/초²)
-const DAMP = 0.4 // 빠를수록 더 줄어드는 저항(1/초)
+/** 바닥 마찰. decel: 마찰로 줄어드는 속도(판 길이/초²), damp: 빠를수록 더 줄어드는 저항(1/초) */
+export type Friction = { decel: number; damp: number }
+/** 나무판(알까기, 땅따먹기) */
+export const WOOD: Friction = { decel: 1.1, damp: 0.4 }
+/** 얼음판(컬링): 훨씬 덜 줄어들어 멀리 미끄러진다 */
+export const ICE: Friction = { decel: 0.5, damp: 0.1 }
 const RESTITUTION = 0.92 // 돌끼리 부딪힐 때 남는 탄성
 const STOP_SPEED = 0.01
 const MAX_STEPS = 120 * 10 // 아무리 길어도 10초면 멈춘 것으로 본다
@@ -25,7 +29,7 @@ export function toDiscs(bodies: Body[]): Disc[] {
 }
 
 /** 한 간격만큼 움직인다. 아직 움직이는 돌이 있으면 true */
-export function step(bodies: Body[]): boolean {
+export function step(bodies: Body[], friction: Friction = WOOD): boolean {
   let moving = false
   for (const b of bodies) {
     if (b.out) continue
@@ -36,7 +40,7 @@ export function step(bodies: Body[]): boolean {
     }
     b.x += b.vx * DT
     b.y += b.vy * DT
-    const next = Math.max(0, speed - DECEL * DT) * (1 - DAMP * DT)
+    const next = Math.max(0, speed - friction.decel * DT) * (1 - friction.damp * DT)
     b.vx *= next / speed
     b.vy *= next / speed
     if (b.x < 0 || b.x > 1 || b.y < 0 || b.y > 1) {
@@ -82,10 +86,10 @@ export function step(bodies: Body[]): boolean {
 export type Shot = { id: number; vx: number; vy: number }
 
 /** 시작 배치에서 한 번 튕긴 뒤 모두 멈췄을 때의 배치 */
-export function simulate(from: Disc[], shot: Shot): Disc[] {
+export function simulate(from: Disc[], shot: Shot, friction: Friction = WOOD): Disc[] {
   const bodies = toBodies(from)
   bodies[shot.id].vx = shot.vx
   bodies[shot.id].vy = shot.vy
-  for (let i = 0; i < MAX_STEPS && step(bodies); i++);
+  for (let i = 0; i < MAX_STEPS && step(bodies, friction); i++);
   return toDiscs(bodies)
 }
