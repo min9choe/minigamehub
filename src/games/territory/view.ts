@@ -180,8 +180,8 @@ export function mountTerritory(el: HTMLElement, ctx: GameContext<Move>): GameVie
       text =
         s.stops.length === FLICKS - 1
           ? `마지막 ${FLICKS}번째! 내 땅 안에 멈춰야 땅을 얻어요.`
-          : `${s.stops.length + 1}번째 튕기기 · 돌을 당겼다 놓으세요. 3번째에 내 땅으로 돌아오면 성공!`
-    } else text = `${name(s.turn)} 차례 · ${s.stops.length + 1}/${FLICKS}번째`
+          : `${s.stops.length + 1}번째 튕기기. 돌을 당겼다 놓으세요. 3번째에 내 땅으로 돌아오면 성공!`
+    } else text = `${name(s.turn)} 차례, ${s.stops.length + 1}/${FLICKS}번째 튕기기`
     hint.textContent = text
   }
 

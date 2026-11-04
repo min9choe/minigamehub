@@ -241,7 +241,7 @@ export const yut: GameDef<State, Move> = {
       // 출발 표시
       const [sx, sy] = P(0)
       g.fillStyle = 'rgba(80, 50, 20, 0.8)'
-      g.font = `600 ${Math.round(size * 0.03)}px system-ui, sans-serif`
+      g.font = `${Math.round(size * 0.032)}px 'Black Han Sans', system-ui, sans-serif`
       g.textAlign = 'center'
       g.fillText('출발', sx - size * 0.02, sy + size * 0.065)
       // 말: 같은 자리의 말은 하나로 그리고 개수를 적는다
@@ -267,7 +267,7 @@ export const yut: GameDef<State, Move> = {
           g.stroke()
           if (k > 1) {
             g.fillStyle = '#fff'
-            g.font = `700 ${Math.round(r * 1.1)}px system-ui, sans-serif`
+            g.font = `${Math.round(r * 1.1)}px 'Black Han Sans', system-ui, sans-serif`
             g.textBaseline = 'middle'
             g.fillText(String(k), x, y + 1)
             g.textBaseline = 'alphabetic'
@@ -283,7 +283,7 @@ export const yut: GameDef<State, Move> = {
           const home = s.pieces[p].filter((pc) => !pc.started && !pc.done).length
           const done = s.pieces[p].filter((pc) => pc.done).length
           const cls = [p === s.turn && s.winner === null && 'is-turn', p === me() && 'is-me', s.out.includes(p) && 'is-out'].filter(Boolean).join(' ')
-          return `<li class="${cls}"><i style="background:${COLORS[p]}"></i><span>${esc(ctx.names.get(id) ?? '')}</span><small>대기 ${home} · 완주 ${done}/${s.pieces[p].length}</small></li>`
+          return `<li class="${cls}"><i style="background:${COLORS[p]}"></i><span>${esc(ctx.names.get(id) ?? '')}</span><small>대기 ${home}, 완주 ${done}/${s.pieces[p].length}</small></li>`
         })
         .join('')
 
@@ -307,7 +307,7 @@ export const yut: GameDef<State, Move> = {
         s.winner !== null
           ? ''
           : !myTurn()
-            ? `${name(s.turn)} 차례${s.lastCapture?.by === s.turn ? ' · 잡아서 한 번 더!' : ''}`
+            ? `${name(s.turn)} 차례${s.lastCapture?.by === s.turn ? '. 잡아서 한 번 더!' : ''}`
             : s.phase === 'throw'
               ? s.pending.length
                 ? '한 번 더 던져요!'

@@ -146,7 +146,7 @@ export function mountFortress(el: HTMLElement, ctx: GameContext<Move>): GameView
     g.fillStyle = t.hp > 50 ? '#1f9d55' : t.hp > 25 ? '#d97a00' : '#d64545'
     g.fillRect(x - 16, y - 26, (32 * t.hp) / 100, 5)
     g.fillStyle = '#1d1c1a'
-    g.font = `${12 / scale / k}px system-ui, sans-serif` // 화면에서 12px로 보이게 축척을 되돌린다
+    g.font = `${12 / scale / k}px 'Gowun Dodum', system-ui, sans-serif` // 화면에서 12px로 보이게 축척을 되돌린다
     g.textAlign = 'center'
     g.fillText(name(i), x, y - 31)
     g.restore()

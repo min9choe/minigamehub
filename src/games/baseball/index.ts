@@ -162,7 +162,7 @@ export const baseball: GameDef<State, Move> = {
           : s.phase === 'done'
             ? '경기 끝'
             : myTurn()
-              ? '<b>내 차례</b> · 서로 다른 숫자 4개를 불러요'
+              ? '<b>내 차례</b>예요. 서로 다른 숫자 4개를 불러요.'
               : `${name(s.turn)} 차례`
 
       history.innerHTML = s.history
@@ -184,7 +184,7 @@ export const baseball: GameDef<State, Move> = {
       pad.querySelector<HTMLButtonElement>('[data-action=send]')!.disabled = !can || typed.length !== DIGITS
 
       note.innerHTML = s.reveal
-        ? `정답 <code>${esc(s.reveal.answer)}</code> · ${s.reveal.verified ? '처음 알린 지문과 같아요 ✓' : '<b class="bb-bad">처음 알린 지문과 달라요!</b>'}`
+        ? `정답은 <code>${esc(s.reveal.answer)}</code>. ${s.reveal.verified ? '처음 알린 지문과 같아요 ✓' : '<b class="bb-bad">처음 알린 지문과 달라요!</b>'}`
         : s.commit
           ? `정답은 방장 브라우저에만 있어요. 지문 <code>${s.commit}</code> (끝나면 정답과 대조해요)`
           : ''

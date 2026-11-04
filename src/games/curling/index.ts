@@ -254,7 +254,7 @@ export const curling: GameDef<State, Move> = {
       info.textContent =
         s.winner !== null
           ? '경기 끝'
-          : `${s.end}엔드${s.end > ENDS ? '(연장)' : ` / ${ENDS}`} · 남은 돌 ${name(0)} ${left(0)}, ${name(1)} ${left(1)}`
+          : `${s.end}엔드${s.end > ENDS ? '(연장)' : `(${ENDS}엔드 중)`}. 남은 돌은 ${name(0)} ${left(0)}개, ${name(1)} ${left(1)}개`
       hint.textContent = endView
         ? endView.text
         : anim || s.winner !== null

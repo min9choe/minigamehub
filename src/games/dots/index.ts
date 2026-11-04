@@ -176,7 +176,7 @@ export const dots: GameDef<State, Move> = {
         g.fillStyle = COLORS[owner] + '40'
         g.fillRect(x, y, gp, gp)
         g.fillStyle = COLORS[owner]
-        g.font = `600 ${Math.round(gp * 0.32)}px system-ui, sans-serif`
+        g.font = `${Math.round(gp * 0.32)}px 'Black Han Sans', system-ui, sans-serif`
         g.textAlign = 'center'
         g.textBaseline = 'middle'
         g.fillText((ctx.names.get(s.order[owner]) ?? '?').slice(0, 2), x + gp / 2, y + gp / 2)

@@ -29,13 +29,10 @@ export function renderLobby(root: HTMLElement) {
     <div class="lobby">
       <header class="topbar">
         <div class="me">
-          <strong class="my-nick">${esc(profile.nick)}</strong>
-          <span class="lobby-name">${profile.code ? `로비 코드 <b>${esc(profile.code)}</b>` : '공용 로비'}</span>
+          <h1 class="my-nick">${esc(profile.nick)}</h1>
+          <p class="lobby-line"></p>
         </div>
-        <div class="online">
-          <span class="status" data-status="connecting"><i></i><span class="status-text">연결 중</span></span>
-          <span class="count">접속 <b>1</b>명 · 진행 중 <b class="rooms">0</b>판</span>
-        </div>
+        <span class="status" data-status="connecting"><i></i><span class="status-text">연결 중</span></span>
       </header>
       <div class="banner" role="status" hidden></div>
       <section class="invite card" hidden>
@@ -53,7 +50,7 @@ export function renderLobby(root: HTMLElement) {
         <section class="games" aria-label="게임">
           ${GAMES.map(
             (g) => `
-            <article class="game card" data-game="${g.id}">
+            <article class="game" data-game="${g.id}">
               ${cardArt[g.id] ? `<img class="game-art" src="${cardArt[g.id]}" alt="" loading="lazy" decoding="async" />` : ''}
               <div class="game-head">
                 <h3>${esc(g.name)}</h3>
@@ -61,7 +58,7 @@ export function renderLobby(root: HTMLElement) {
               </div>
               <p>${esc(g.summary)}</p>
               <div class="game-foot">
-                <span class="waiting">대기 <b>0</b>/${g.max}</span>
+                <span class="waiting"></span>
                 <button class="btn" type="button" data-action="queue" disabled>${g.def ? '줄서기' : '준비 중'}</button>
               </div>
             </article>`
@@ -73,14 +70,20 @@ export function renderLobby(root: HTMLElement) {
         </section>
       </main>
       <footer class="bottombar">
-        <div class="queue-bar" hidden>
-          <span class="queue-text"></span>
-          <button class="btn" type="button" data-action="cancel">취소</button>
+        <div class="ticket" role="status" hidden>
+          <div class="ticket-top">
+            <div>
+              <span class="ticket-game"></span>
+              <b class="ticket-count"></b>
+            </div>
+            <button class="btn" type="button" data-action="cancel">취소</button>
+          </div>
+          <p class="ticket-note"></p>
         </div>
         <div class="bottom-actions">
           <button class="btn" type="button" data-action="open-invite">친구 초대 링크</button>
           <button class="btn" type="button" data-action="open-practice">봇과 연습</button>
-          <button class="btn ghost" type="button" data-action="leave">닉네임·로비 바꾸기</button>
+          <button class="btn ghost" type="button" data-action="leave">닉네임이나 로비 바꾸기</button>
         </div>
       </footer>
       <div class="sheet" hidden>
@@ -134,19 +137,23 @@ export function renderLobby(root: HTMLElement) {
     const names = displayNames(players)
     const mine = lobby.mine()
     $(root, '.my-nick').textContent = names.get(myId) ?? profile!.nick
-    $(root, '.count b').textContent = String(players.length)
-    $(root, '.rooms').textContent = String(lobby.roomsInProgress())
+    // 접속 정보는 문장으로 쓴다: '공용 로비에 3명이 있어요. 1판 진행 중.'
+    const where = profile!.code ? `${profile!.code} 로비` : '공용 로비'
+    const rooms = lobby.roomsInProgress()
+    $(root, '.lobby-line').textContent = `${where}에 ${players.length}명이 있어요.${rooms ? ` ${rooms}판 진행 중.` : ''}`
 
     const cooling = Date.now() < cooldownUntil
     for (const g of GAMES) {
       const card = $(root, `[data-game="${g.id}"]`)
       const waiting = lobby.queueOf(g.id).length
-      $(card, '.waiting b').textContent = String(waiting)
+      $(card, '.waiting').textContent = waiting ? `${waiting}명 기다리는 중` : ''
       const btn = $<HTMLButtonElement>(card, '[data-action=queue]')
       if (!g.def) continue
       const inThis = mine.game === g.id
-      btn.textContent = inThis ? '취소' : '줄서기'
-      btn.classList.toggle('primary', !inThis)
+      // 줄을 선 게임은 버튼이 '줄 섰어요'로 바뀌고, 한 번 더 누르면 줄에서 빠진다
+      btn.textContent = inThis ? '줄 섰어요' : '줄서기'
+      btn.setAttribute('aria-label', inThis ? `${g.name} 줄에서 빠지기` : `${g.name} 줄서기`)
+      btn.classList.toggle('primary', inThis)
       btn.disabled = cooling || status !== 'connected' || !!mine.room
       card.classList.toggle('is-queued', inThis)
     }
@@ -157,15 +164,26 @@ export function renderLobby(root: HTMLElement) {
       if (auto && mine.game !== auto) lobby.joinQueue(auto)
     }
 
-    // 대기 바: '오목 대기 중 1/2 [취소]'
-    const bar = $(root, '.queue-bar')
+    // 번호표: 줄을 서면 아래에서 한 번 올라온다
+    const ticket = $(root, '.ticket')
     const game = mine.game ? findGame(mine.game) : undefined
-    bar.hidden = !game
+    if (game && ticket.hidden) {
+      ticket.classList.remove('is-printed')
+      void ticket.offsetWidth // 애니메이션을 처음부터 다시 틀기 위해
+      ticket.classList.add('is-printed')
+    }
+    ticket.hidden = !game
     if (game) {
       const n = lobby.queueOf(game.id).length
-      const soon = game.min < game.max && n >= game.min ? ' · 곧 시작해요' : ''
-      $(bar, '.queue-text').textContent = `${game.name} 대기 중 ${n}/${game.max}${soon}`
-      $<HTMLButtonElement>(bar, '[data-action=cancel]').disabled = cooling
+      $(ticket, '.ticket-game').textContent = `${game.name} 번호표`
+      $(ticket, '.ticket-count').innerHTML = `${n}<small> / ${game.max}</small>`
+      $(ticket, '.ticket-note').textContent =
+        n < game.min
+          ? `${game.min - n}명 더 오면 시작해요.`
+          : n >= game.max
+            ? '모두 모였어요. 곧 시작해요.'
+            : `${n}명이 모였어요. 곧 시작해요.`
+      $<HTMLButtonElement>(ticket, '[data-action=cancel]').disabled = cooling
     }
 
     const sorted = [...players].sort((a, b) =>

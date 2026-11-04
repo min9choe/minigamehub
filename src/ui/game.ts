@@ -97,7 +97,7 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
 
     clock.textContent =
       v.phase === 'playing' && v.deadline
-        ? `${turn === me ? '내 차례' : `${names.get(turn ?? '') ?? ''} 차례`} · ${secondsLeft(v.deadline)}초`
+        ? `${turn === me ? '내 차례' : `${names.get(turn ?? '') ?? ''} 차례`}, ${secondsLeft(v.deadline)}초 남음`
         : ''
 
     const spectating = !iPlay && v.phase === 'playing'

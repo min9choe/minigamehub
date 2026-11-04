@@ -1,21 +1,35 @@
+/*
+ * 디자인 방향: 모눈종이와 번호표.
+ * 바탕은 오목·리버시·점 잇기 판과 이어지는 모눈종이, 글자와 굵은 선은 연필색.
+ * 대담한 요소는 줄을 서면 나오는 노란 번호표 하나뿐이고, 나머지는 조용하게 둔다.
+ * 노랑은 번호표와 '내 차례'에만 쓴다. 둥근 모서리는 버튼(8px)과 번호표에만 준다.
+ */
 :root {
-  --bg: #f6f5f1;
-  --surface: #ffffff;
-  --text: #1d1c1a;
-  --muted: #6b6862;
-  --line: #e3e0d8;
-  --accent: #2f6fde;
+  --bg: #eef2f6; /* 모눈 */
+  --grid: #dce4ec; /* 모눈 격자선 */
+  --surface: #ffffff; /* 종이 */
+  --text: #262a31; /* 연필 */
+  --ink: #262a31;
+  --muted: #5a6170;
+  --line: #dce4ec;
+  --accent: #2f5fe0; /* 색종이 파랑: 링크, 포커스 */
   --accent-text: #ffffff;
+  --ticket: #ffd23f; /* 번호표 노랑 */
+  --ticket-soft: #fff6d1;
+  --ticket-text: #262a31;
   --ok: #1f9d55;
   --warn: #d97a00;
-  --bad: #d64545;
-  --banner-bg: #fff4e0;
-  --banner-text: #7a4a00;
-  --radius: 14px;
+  --bad: #e0483e; /* 지우개 빨강 */
+  --banner-bg: #e3ebfa;
+  --banner-text: #1d3d8f;
+  --radius: 8px;
   --tap: 44px; /* 손가락으로 누르기 쉬운 최소 높이(기획안 7장) */
+  --font-body: 'Gowun Dodum', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-display: 'Black Han Sans', var(--font-body);
 
-  font-family: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-  line-height: 1.5;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
   color: var(--text);
   background: var(--bg);
   -webkit-text-size-adjust: 100%;
@@ -23,15 +37,18 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #161614;
-    --surface: #22211f;
-    --text: #f1efea;
-    --muted: #a19d95;
-    --line: #36342f;
-    --accent: #6a9cf5;
+    --bg: #1c2129;
+    --grid: #262d37;
+    --surface: #262c35;
+    --text: #e9edf2;
+    --ink: #e9edf2;
+    --muted: #a3acb9;
+    --line: #353d49;
+    --accent: #7fa2ff;
     --accent-text: #0c1424;
-    --banner-bg: #3a2c12;
-    --banner-text: #f5d39a;
+    --ticket-soft: #3a3420;
+    --banner-bg: #24314f;
+    --banner-text: #c7d6ff;
   }
 }
 
@@ -42,7 +59,10 @@
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--bg);
+  background-color: var(--bg);
+  /* 모눈종이: 16px 격자 */
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 16px 16px;
   /* 휴대폰: 누를 때 회색 번쩍임을 없애고, 당겨서 새로고침이 판 조작과 겹치지 않게 한다 */
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
@@ -55,81 +75,127 @@ p {
   margin: 0;
 }
 
+/* 제목과 숫자는 간판체 하나로. 본문 글꼴은 굵기가 하나뿐이라 강조도 간판체로 한다 */
+h1,
+h2,
+h3,
+b,
+strong {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 4px;
 }
 
 .btn {
   min-height: var(--tap);
   padding: 0 18px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-weight: 600;
   cursor: pointer;
   touch-action: manipulation; /* 두 번 눌러 확대가 버튼 연타를 늦추지 않게 */
 }
 .btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--surface);
 }
 .btn.ghost {
   background: transparent;
   border-color: transparent;
   color: var(--muted);
 }
+.btn.danger {
+  color: var(--bad);
+}
+.btn.icon {
+  padding: 0 10px;
+  font-size: 18px;
+}
 .btn:disabled {
   cursor: default;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 .btn:focus-visible,
-input:focus-visible {
+input:focus-visible,
+button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
+input[type='text'],
+input:not([type]) {
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px 미만이면 iOS가 입력할 때 화면을 확대한다 */
+}
+input[type='text']:focus,
+input:not([type]):focus {
+  border-color: var(--ink);
+}
+
+.banner {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  background: var(--banner-bg);
+  color: var(--banner-text);
+  font-size: 14px;
+}
+
 /* 입장 화면 */
 .entry {
-  max-width: 420px;
+  max-width: 440px;
   margin: 0 auto;
-  padding: 4vh 16px 32px;
+  padding: 4vh 16px 40px;
+}
+.entry-hero {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 20px;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--line);
 }
 .brand {
-  font-size: 28px;
-  letter-spacing: -0.02em;
+  font-size: 40px;
+  line-height: 1.1;
 }
 .tagline {
-  margin: 8px 0 24px;
+  margin: 8px 0 20px;
   color: var(--muted);
 }
 .entry-form {
   display: grid;
   gap: 18px;
   padding: 20px;
+  border-top: 2px solid var(--ink);
 }
 .field {
   display: grid;
   gap: 6px;
-  font-weight: 600;
+}
+.field > span {
+  font-family: var(--font-display);
 }
 .field small {
-  font-weight: 400;
+  font-family: var(--font-body);
   color: var(--muted);
-}
-.field input {
-  min-height: var(--tap);
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 16px; /* 16px 미만이면 iOS가 입력할 때 화면을 확대한다 */
 }
 .hint {
   font-size: 13px;
@@ -138,53 +204,55 @@ input:focus-visible {
   color: var(--bad);
   font-size: 14px;
 }
+.invite-note {
+  margin: -8px 0 16px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--ink);
+  background: var(--ticket-soft);
+  font-size: 15px;
+}
 
 /* 로비 */
 .lobby {
   max-width: 960px;
   margin: 0 auto;
-  padding: 0 16px 150px;
+  padding: 0 16px 300px; /* 아래 고정 막대(번호표 포함)에 가리지 않게 */
 }
 .topbar {
   position: sticky;
   top: 0;
   z-index: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 0;
+  padding: 16px 0 12px;
   background: var(--bg);
 }
 .me {
   display: grid;
+  gap: 2px;
   min-width: 0;
 }
 .my-nick {
-  font-size: 18px;
+  font-family: var(--font-display);
+  font-size: 31px;
+  line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.lobby-name,
-.count {
+.lobby-line {
   color: var(--muted);
-  font-size: 13px;
-}
-.count b {
-  color: var(--text);
-}
-.online {
-  display: grid;
-  justify-items: end;
-  flex-shrink: 0;
+  font-size: 14px;
 }
 .status {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
+  color: var(--muted);
   font-size: 13px;
-  font-weight: 600;
 }
 .status i {
   width: 8px;
@@ -200,55 +268,84 @@ input:focus-visible {
   background: var(--bad);
 }
 
-.banner {
-  margin-bottom: 12px;
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  background: var(--banner-bg);
-  color: var(--banner-text);
-  font-size: 14px;
-}
-
 .lobby main {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
+
+/* 게임 목록: 종이 위 한 줄씩. 같은 카드를 늘어놓지 않고, 얇은 선으로만 나눈다 */
 .games {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
+  border-top: 2px solid var(--ink);
+  background: var(--surface);
+}
+@media (min-width: 820px) {
+  .games {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1px;
+    background: var(--line);
+  }
 }
 .game {
   display: grid;
-  gap: 8px;
-  padding: 16px;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'art head foot'
+    'art desc foot';
+  column-gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.game-art {
+  grid-area: art;
+  width: 76px;
+  height: 57px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--line);
 }
 .game-head {
+  grid-area: head;
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 .game-head h3 {
-  font-size: 18px;
+  font-size: 20px;
+  line-height: 1.2;
 }
 .cap {
   color: var(--muted);
   font-size: 13px;
+  white-space: nowrap;
 }
-.game p {
+.game > p {
+  grid-area: desc;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.4;
 }
 .game-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 4px;
+  grid-area: foot;
+  display: grid;
+  justify-items: end;
+  gap: 4px;
 }
 .waiting {
   color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.game-foot .btn {
+  min-height: 38px;
+  padding: 0 14px;
   font-size: 14px;
+}
+.game.is-queued {
+  background: var(--ticket-soft);
 }
 
 .players {
@@ -256,26 +353,27 @@ input:focus-visible {
 }
 .players h2 {
   margin-bottom: 10px;
-  font-size: 15px;
+  font-size: 18px;
 }
 .player-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px 14px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .player-list li {
-  padding: 4px 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-size: 14px;
+  font-size: 15px;
 }
 .player-list li.is-me {
-  border-color: var(--accent);
-  color: var(--accent);
-  font-weight: 600;
+  font-family: var(--font-display);
+}
+.player-list small {
+  margin-left: 4px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 12px;
 }
 
 .bottombar {
@@ -283,50 +381,163 @@ input:focus-visible {
   left: 0;
   right: 0;
   bottom: 0;
-  display: flex;
-  justify-content: center;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
   padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
   background: var(--bg);
-  border-top: 1px solid var(--line);
+  border-top: 2px solid var(--ink);
+}
+.bottom-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.bottom-actions .btn {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 14px;
 }
 
-/* 줄서기 */
-.game.is-queued {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+/* 번호표: 줄을 서면 아래에서 한 번 올라온다. 이 화면에서 유일하게 대담한 요소 */
+.ticket {
+  width: 100%;
+  max-width: 520px;
+  padding: 12px 16px 12px;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px 12px 4px 4px;
+  background: var(--ticket);
+  color: var(--ticket-text);
 }
-.player-list small {
-  margin-left: 4px;
+.ticket[hidden] {
+  display: none;
+}
+.ticket.is-printed {
+  animation: ticket-print 280ms ease-out;
+}
+@keyframes ticket-print {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticket.is-printed {
+    animation: none;
+  }
+}
+.ticket-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ticket-game {
+  font-size: 13px;
+}
+.ticket-count {
+  display: block;
+  font-size: 44px;
+  line-height: 1;
+}
+.ticket-count small {
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+.ticket .btn {
+  min-height: 36px;
+  border-color: var(--ticket-text);
+  background: transparent;
+  color: var(--ticket-text);
+}
+/* 절취선 */
+.ticket-note {
+  margin: 10px -16px 0;
+  padding: 8px 16px 0;
+  border-top: 1.5px dashed var(--ticket-text);
+  font-size: 14px;
+}
+
+/* 친구 초대 링크 안내 */
+.invite {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1.5px solid var(--ink);
+}
+.invite[hidden] {
+  display: none;
+}
+.invite-text {
+  font-size: 14px;
+}
+.invite-link {
+  display: flex;
+  gap: 8px;
+}
+.invite-link input {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+.invite-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 게임 고르기 시트(초대, 연습) */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--ink) 35%, transparent);
+}
+.sheet[hidden] {
+  display: none;
+}
+.sheet-card {
+  display: grid;
+  gap: 10px;
+  width: min(420px, 100%);
+  margin-bottom: env(safe-area-inset-bottom);
+  padding: 20px;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  background: var(--surface);
+}
+.sheet-card h2 {
+  font-size: 22px;
+}
+.sheet-desc {
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 400;
+  font-size: 14px;
 }
-.bottombar {
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+.sheet-list {
+  display: grid;
+  gap: 6px;
 }
-.queue-bar {
+.sheet-list .btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  max-width: 560px;
-  padding: 4px 4px 4px 14px;
-  border-radius: 12px;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-weight: 600;
 }
-.queue-bar[hidden] {
-  display: none;
+.sheet-list .btn small {
+  color: var(--muted);
 }
-.queue-bar .btn {
-  flex-shrink: 0;
+@media (min-width: 600px) {
+  .sheet {
+    align-items: center;
+  }
 }
 
-/* 게임 화면 */
+/* 게임 화면 공통 틀: 판이 주인공이고, 위쪽은 얇은 한 줄 */
 .game-screen {
   max-width: 720px;
   margin: 0 auto;
@@ -341,9 +552,11 @@ input:focus-visible {
 }
 .game-title {
   display: grid;
+  min-width: 0;
 }
 .game-title strong {
-  font-size: 18px;
+  font-size: 22px;
+  line-height: 1.2;
 }
 .clock {
   min-height: 1.5em;
@@ -351,13 +564,15 @@ input:focus-visible {
   font-size: 14px;
   font-variant-numeric: tabular-nums;
 }
-.btn.danger {
-  color: var(--bad);
+.game-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .seats {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   margin: 0 0 12px;
   padding: 0;
   list-style: none;
@@ -366,9 +581,9 @@ input:focus-visible {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  padding: 4px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
   background: var(--surface);
   font-size: 14px;
 }
@@ -376,15 +591,19 @@ input:focus-visible {
   color: var(--muted);
   font-size: 12px;
 }
-.seats li.is-me {
-  font-weight: 600;
+.seats li.is-me span {
+  font-family: var(--font-display);
 }
 .seats li.is-turn {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  border-color: var(--ink);
 }
-.seats li.is-turn small {
-  color: var(--accent);
+/* 내 차례는 번호표와 같은 노랑으로 */
+.seats li.is-turn.is-me {
+  background: var(--ticket);
+  color: var(--ticket-text);
+}
+.seats li.is-turn.is-me small {
+  color: var(--ticket-text);
 }
 .seats li.is-away small {
   color: var(--warn);
@@ -400,7 +619,7 @@ input:focus-visible {
   gap: 12px;
   margin-bottom: 12px;
   padding: 8px 8px 8px 14px;
-  border-radius: var(--radius);
+  border-radius: 4px;
   background: var(--banner-bg);
   color: var(--banner-text);
 }
@@ -415,6 +634,7 @@ input:focus-visible {
   opacity: 0.5;
 }
 
+/* 대기·카운트다운·결과: 종이 한 장 */
 .overlay {
   position: fixed;
   inset: 0;
@@ -422,8 +642,7 @@ input:focus-visible {
   display: grid;
   place-items: center;
   padding: 16px;
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
-  backdrop-filter: blur(2px);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
 }
 .overlay[hidden] {
   display: none;
@@ -434,31 +653,46 @@ input:focus-visible {
   gap: 10px;
   width: min(360px, 100%);
   padding: 24px 20px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
   background: var(--surface);
   text-align: center;
+}
+.overlay-card h2 {
+  font-size: 25px;
 }
 .overlay-card p {
   color: var(--muted);
 }
 .countdown {
-  font-size: 72px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 88px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.result-title {
-  font-size: 32px;
-}
-.result-title.is-win {
-  color: var(--accent);
+.overlay-card .result-title {
+  font-size: 44px;
+  line-height: 1.1;
 }
 .overlay-actions {
   display: grid;
   gap: 8px;
   width: 100%;
   margin-top: 8px;
+}
+
+/* 휴대폰 가로 화면처럼 높이가 낮으면 위쪽 참가자 줄을 숨긴다. 이름과 차례는 게임마다 판 위에 따로 보인다 */
+@media (max-height: 500px) {
+  .game-screen .seats {
+    display: none;
+  }
+  .game-top {
+    padding: 6px 0 4px;
+  }
+}
+
+.ttt-cell {
+  touch-action: manipulation;
 }
 
 /* 틱택토 */
@@ -517,7 +751,8 @@ input:focus-visible {
   color: var(--text);
   font: inherit;
   font-size: 20cqi;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 400;
   line-height: 1;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -665,7 +900,8 @@ input:focus-visible {
   box-shadow: 0 0 0 1px var(--accent);
 }
 .terr-scores li.is-me span {
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 400;
 }
 .terr-scores li.is-out {
   opacity: 0.5;
@@ -763,129 +999,6 @@ input:focus-visible {
   }
 }
 
-/* 휴대폰 가로 화면처럼 높이가 낮으면 위쪽 참가자 줄을 숨긴다. 이름과 차례는 게임마다 판 위에 따로 보인다 */
-@media (max-height: 500px) {
-  .game-screen .seats {
-    display: none;
-  }
-  .game-top {
-    padding: 6px 0 4px;
-  }
-}
-
-/* 7단계: 소리 버튼, 친구 초대, 봇 연습 */
-.game-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.btn.icon {
-  padding: 0 10px;
-  font-size: 18px;
-}
-.bottom-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-}
-.bottom-actions .btn {
-  padding: 0 14px;
-  font-size: 14px;
-}
-.ttt-cell {
-  touch-action: manipulation;
-}
-
-.invite {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 14px;
-  border-color: var(--accent);
-}
-.invite[hidden] {
-  display: none;
-}
-.invite-text {
-  font-size: 14px;
-}
-.invite-link {
-  display: flex;
-  gap: 8px;
-}
-.invite-link input {
-  flex: 1;
-  min-width: 0;
-  min-height: var(--tap);
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 14px;
-}
-.invite-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-.invite-note {
-  margin: -8px 0 16px;
-  padding: 12px 14px;
-  border-color: var(--accent);
-  font-size: 14px;
-}
-
-.sheet {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: grid;
-  align-items: end;
-  justify-items: center;
-  padding: 16px;
-  background: color-mix(in srgb, var(--bg) 60%, transparent);
-}
-.sheet[hidden] {
-  display: none;
-}
-.sheet-card {
-  display: grid;
-  gap: 10px;
-  width: min(420px, 100%);
-  margin-bottom: env(safe-area-inset-bottom);
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-.sheet-card h2 {
-  font-size: 18px;
-}
-.sheet-desc {
-  color: var(--muted);
-  font-size: 14px;
-}
-.sheet-list {
-  display: grid;
-  gap: 8px;
-}
-.sheet-list .btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.sheet-list .btn small {
-  color: var(--muted);
-  font-weight: 400;
-}
-@media (min-width: 600px) {
-  .sheet {
-    align-items: center;
-  }
-}
 .omok-mono {
   margin-left: 6px;
   padding: 1px 8px;
@@ -893,7 +1006,8 @@ input:focus-visible {
   background: #4a5160;
   color: #fff;
   font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 400;
   vertical-align: middle;
 }
 /* 포트리스 파워 게이지: 발사 버튼을 누르고 있는 동안 차오른다 */
@@ -931,28 +1045,6 @@ input:focus-visible {
 .ft-fire.is-charging {
   filter: brightness(0.85);
   transform: scale(0.97);
-}
-
-/* 힉스필드 그래픽: 입장 화면 그림, 로비 게임 카드 그림 */
-.entry-hero {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  margin-bottom: 16px;
-  border-radius: var(--radius);
-  object-fit: cover;
-  background: linear-gradient(135deg, #f6d7f0, #cfe3ff);
-}
-.game {
-  overflow: hidden;
-}
-.game-art {
-  display: block;
-  width: calc(100% + 32px);
-  margin: -16px -16px 4px;
-  aspect-ratio: 2 / 1;
-  object-fit: cover;
-  background: var(--line);
 }
 
 /* 새 게임 공통: 점수 줄, 판 가운데 정렬, 안내 문구 */
@@ -1065,7 +1157,8 @@ input:focus-visible {
 }
 .dt-scores li.is-me span,
 .yt-players li.is-me span {
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 400;
 }
 .dt-scores li.is-out,
 .yt-players li.is-out {
@@ -1169,7 +1262,8 @@ input:focus-visible {
 .bb-history code,
 .bb-note code {
   font-size: 16px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 400;
   letter-spacing: 0.15em;
 }
 .bb-bad {
@@ -1190,7 +1284,8 @@ input:focus-visible {
   border-radius: 10px;
   background: var(--surface);
   font-size: 28px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-weight: 400;
 }
 .bb-pad {
   display: grid;
@@ -1211,7 +1306,8 @@ input:focus-visible {
 }
 .bb-note code {
   font-size: 13px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 400;
   letter-spacing: 0;
 }
 .bb-note code:first-child {

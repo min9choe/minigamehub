@@ -148,7 +148,7 @@ export const tictactoe: GameDef<State, Move> = {
       info.textContent = showPrev
         ? `${ctx.names.get(s.order[s.prev!.winner])} 이 판 승리`
         : me >= 0
-          ? `${s.boardNo + 1}번째 판 · 나는 ${SYMBOL[markOf(s, me)]}${xOf(s) === me ? '(선공)' : ''} · ${WINS_NEEDED}판 먼저 이기면 승리`
+          ? `${s.boardNo + 1}번째 판. 나는 ${SYMBOL[markOf(s, me)]}${xOf(s) === me ? '(선공)' : ''}, ${WINS_NEEDED}판 먼저 이기면 승리`
           : `${s.boardNo + 1}번째 판`
       hint.textContent = showPrev || s.winner !== null ? '' : `표시는 ${MAX_MARKS}개까지 남아요. 흐린 표시는 다음 수에 사라져요.`
 

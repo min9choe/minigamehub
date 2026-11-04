@@ -35,7 +35,7 @@ export const GAMES: GameInfo[] = [
   { id: 'alkkagi', name: '알까기', summary: '돌을 튕겨 상대 돌을 판 밖으로', min: 2, max: 2, def: alkkagi },
   { id: 'territory', name: '땅따먹기', summary: '세 번 튕겨 집으로 돌아와 땅 넓히기', min: 2, max: 4, def: territory },
   { id: 'fortress', name: '포트리스', summary: '각도와 파워로 포탄을 쏘는 탱크 개인전', min: 2, max: 4, def: fortress },
-  { id: 'yut', name: '윷놀이', summary: '윷을 던져 말을 모두 먼저 완주. 업기·잡기·지름길', min: 2, max: 4, def: yut, bot: yutBot },
+  { id: 'yut', name: '윷놀이', summary: '윷을 던져 말을 모두 먼저 완주. 업고 잡고 지름길로', min: 2, max: 4, def: yut, bot: yutBot },
   { id: 'reversi', name: '리버시', summary: '끼운 돌을 뒤집어 판을 더 많이 차지하기', min: 2, max: 2, def: reversi, bot: reversiBot },
   { id: 'dots', name: '점 잇기', summary: '선을 그어 상자를 닫으면 내 것, 한 번 더', min: 2, max: 4, def: dots, bot: dotsBot },
   { id: 'curling', name: '컬링', summary: '얼음 위로 돌을 밀어 과녁 가운데에 가깝게', min: 2, max: 2, def: curling },

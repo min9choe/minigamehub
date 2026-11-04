@@ -214,7 +214,7 @@ export const omok: GameDef<State, Move> = {
       const monoTag = monoMode(s) ? ' <span class="omok-mono">단색 모드</span>' : ''
       info.innerHTML =
         (mine
-          ? `나는 <b>${colorName}</b> · ${over(s) ? '대국 종료' : myTurn() ? '내 차례' : `${turnName} 차례`}`
+          ? `나는 <b>${colorName}</b>, ${over(s) ? '대국 종료' : myTurn() ? '내 차례' : `${turnName} 차례`}`
           : over(s)
             ? '대국 종료'
             : `${turnName} 차례`) + monoTag
