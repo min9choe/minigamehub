@@ -19,6 +19,9 @@ export type State = {
   /** 방금 잡힌 말이 있으면 잡은 사람 */
   lastCapture: { by: number; victims: number[] } | null
   out: number[]
+  /** 말을 모두 완주한 순서(order 번호). 1등이 나와도 남은 사람끼리 마지막 한 명이 남을 때까지 이어 간다 */
+  ranks: number[]
+  /** 판이 끝나면 1등 */
   winner: number | null
 }
 export type Move = { kind: 'throw' } | { kind: 'move'; piece: number; use: number }
@@ -35,12 +38,24 @@ export function canUse(pieces: Piece[], value: number) {
   return pieces.some((p) => moved(p, value) !== null && !(value < 0 && nodeOf(p) === 0 && p.route === 'O'))
 }
 
+/** 아직 뛰고 있는 사람: 기권하지 않았고 완주도 안 했다 */
+const racing = (s: State) => s.order.map((_, i) => i).filter((i) => !s.out.includes(i) && !(s.ranks ?? []).includes(i))
+
 const nextAlive = (s: State, from: number) => {
+  const alive = racing(s)
   for (let i = 1; i <= s.order.length; i++) {
     const p = (from + i) % s.order.length
-    if (!s.out.includes(p)) return p
+    if (alive.includes(p)) return p
   }
   return from
+}
+
+/** 뛰는 사람이 한 명 이하로 남으면 판을 끝낸다. 남은 한 명은 꼴찌로 등수에 넣는다 */
+function checkEnd(s: State): State | null {
+  const alive = racing(s)
+  if (alive.length > 1) return null
+  const ranks = [...s.ranks, ...alive]
+  return { ...s, ranks, winner: ranks[0] ?? alive[0] ?? null, pending: [], phase: 'throw' }
 }
 const nextTurn = (s: State): State => ({ ...s, turn: nextAlive(s, s.turn), phase: 'throw', pending: [] })
 
@@ -66,6 +81,7 @@ export const yut: GameDef<State, Move> = {
       lastThrow: null,
       lastCapture: null,
       out: [],
+      ranks: [],
       winner: null,
     }
   },
@@ -110,7 +126,11 @@ export const yut: GameDef<State, Move> = {
     }
     const pending = s.pending.filter((_, i) => i !== move.use)
     const next: State = { ...s, pieces, pending, lastCapture: victims.length ? { by: me, victims } : null }
-    if (pieces[me].every((p) => p.done)) return { ...next, winner: me }
+    if (pieces[me].every((p) => p.done)) {
+      // 완주한 사람은 등수를 받고 빠진다. 남은 결과가 있어도 버리고 다음 사람에게 넘긴다
+      const ranked: State = { ...next, ranks: [...s.ranks, me], lastCapture: next.lastCapture }
+      return checkEnd(ranked) ?? nextTurn(ranked)
+    }
     // 잡으면 한 번 더 던진다
     if (victims.length) return { ...next, phase: 'throw' }
     if (!pending.length) return nextTurn(next)
@@ -122,14 +142,14 @@ export const yut: GameDef<State, Move> = {
 
   eliminate(s, id) {
     const p = s.order.indexOf(id)
-    if (s.winner !== null || p < 0 || s.out.includes(p)) return s
+    if (s.winner !== null || p < 0 || s.out.includes(p) || s.ranks.includes(p)) return s
     const next = { ...s, out: [...s.out, p] }
-    const alive = s.order.map((_, i) => i).filter((i) => !next.out.includes(i))
-    if (alive.length === 1) return { ...next, winner: alive[0] }
+    const ended = checkEnd(next)
+    if (ended) return ended
     return s.turn === p ? nextTurn(next) : next
   },
 
-  result: (s) => (s.winner === null ? null : { winners: [s.order[s.winner]] }),
+  result: (s) => (s.winner === null ? null : { winners: [s.order[s.winner]], ranking: s.ranks.map((i) => s.order[i]) }),
 
   mount(el, ctx) {
     const COLORS = ['#2f6fde', '#d64545', '#1f9d55', '#d97a00']
@@ -282,8 +302,10 @@ export const yut: GameDef<State, Move> = {
         .map((id, p) => {
           const home = s.pieces[p].filter((pc) => !pc.started && !pc.done).length
           const done = s.pieces[p].filter((pc) => pc.done).length
-          const cls = [p === s.turn && s.winner === null && 'is-turn', p === me() && 'is-me', s.out.includes(p) && 'is-out'].filter(Boolean).join(' ')
-          return `<li class="${cls}"><i style="background:${COLORS[p]}"></i><span>${esc(ctx.names.get(id) ?? '')}</span><small>대기 ${home}, 완주 ${done}/${s.pieces[p].length}</small></li>`
+          const rank = s.ranks.indexOf(p)
+          const cls = [p === s.turn && s.winner === null && 'is-turn', p === me() && 'is-me', s.out.includes(p) && 'is-out', rank >= 0 && 'is-ranked'].filter(Boolean).join(' ')
+          const note = rank >= 0 ? `<b class="yt-rank">${rank + 1}등</b>` : `<small>대기 ${home}, 완주 ${done}/${s.pieces[p].length}</small>`
+          return `<li class="${cls}"><i style="background:${COLORS[p]}"></i><span>${esc(ctx.names.get(id) ?? '')}</span>${note}</li>`
         })
         .join('')
 

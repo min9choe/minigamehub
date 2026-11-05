@@ -16,6 +16,15 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
   const me = getPlayerId()
   const names = displayNames(info.players)
   const name = (id: string) => esc(names.get(id) ?? '?')
+  const watching = !!info.watch
+  // 관전자는 방장에게 판 상태를 받을 때 참가자 목록이 바뀔 수 있다. 게임 화면이 쥔 Map을 그대로 고쳐 쓴다
+  let namedFor = info.players
+  function refreshNames() {
+    if (namedFor === info.players) return
+    namedFor = info.players
+    names.clear()
+    for (const [id, n] of displayNames(info.players)) names.set(id, n)
+  }
 
   root.innerHTML = `
     <div class="game-screen">
@@ -23,6 +32,7 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
         <div class="game-title">
           <strong>${esc(game.name)}</strong>
           <span class="clock"></span>
+          <span class="watchers"></span>
         </div>
         <div class="game-actions">
           <button class="btn ghost icon" type="button" data-action="mute"></button>
@@ -36,6 +46,7 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
     </div>
   `
   const clock = $(root, '.clock')
+  const watchersEl = $(root, '.watchers')
   const seats = $(root, '.seats')
   const notice = $(root, '.game-notice')
   const board = $(root, '.board')
@@ -66,6 +77,7 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
   function update() {
     const v = room.view()
     if (v.phase === 'closed') return
+    refreshNames()
     const turn = v.state !== null && v.phase === 'playing' ? def.turnOf(v.state) : null
     const iPlay = v.order.includes(me)
     const iAmOut = v.forfeited.has(me)
@@ -100,10 +112,12 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
         ? `${turn === me ? '내 차례' : `${names.get(turn ?? '') ?? ''} 차례`}, ${secondsLeft(v.deadline)}초 남음`
         : ''
 
+    watchersEl.textContent = v.watchers ? `${v.watchers}명 관전 중` : ''
+
     const spectating = !iPlay && v.phase === 'playing'
     notice.hidden = !(iAmOut || spectating) || v.phase === 'result'
     if (!notice.hidden) {
-      setHtml(notice, `${iAmOut ? '기권했어요.' : '이번 판은 관전 중이에요.'} <button class="btn" type="button" data-action="lobby">로비로</button>`)
+      setHtml(notice, `${iAmOut ? '기권했어요.' : watching ? '관전 중이에요. 둘 수는 없고 보기만 해요.' : '이번 판은 관전 중이에요.'} <button class="btn" type="button" data-action="lobby">로비로</button>`)
     }
 
     renderOverlay(v)
@@ -134,7 +148,14 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
     overlayKey = key
 
     overlay.hidden = v.phase === 'playing'
-    if (v.phase === 'waiting') {
+    if (v.phase === 'waiting' && watching) {
+      overlay.innerHTML = `
+        <div class="overlay-card">
+          <h2>관전하러 왔어요</h2>
+          <p>판을 불러오는 중…</p>
+          <button class="btn ghost" type="button" data-action="lobby">나가기</button>
+        </div>`
+    } else if (v.phase === 'waiting') {
       overlay.innerHTML = `
         <div class="overlay-card">
           <h2>상대를 찾았어요</h2>
@@ -160,7 +181,13 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
             : v.order.includes(me)
               ? '패배'
               : '경기 종료'
-      const sub = title === '무승부' ? '승부가 나지 않았어요' : `${winners.map(name).join(', ')} 승리`
+      const ranking = v.result.ranking
+      const sub =
+        title === '무승부'
+          ? '승부가 나지 않았어요'
+          : ranking && ranking.length > 2
+            ? ranking.map((id, i) => `${i + 1}등 ${name(id)}`).join(', ')
+            : `${winners.map(name).join(', ')} 승리`
       const voted = v.rematch.has(me)
       const canRematch = here >= game.min
       const votes = info.players.filter((p) => v.present.has(p.id) && v.rematch.has(p.id)).length
@@ -169,9 +196,11 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
           <h2 class="result-title${title.includes('승리') ? ' is-win' : ''}">${title}</h2>
           <p>${sub}</p>
           <div class="overlay-actions">
-            <button class="btn primary" type="button" data-action="rematch" ${voted || !canRematch ? 'disabled' : ''}>
+            ${watching
+              ? `<p class="overlay-note">참가자가 모두 다시 하기를 누르면 다음 판도 볼 수 있어요. (${votes}/${here})</p>`
+              : `<button class="btn primary" type="button" data-action="rematch" ${voted || !canRematch ? 'disabled' : ''}>
               ${canRematch ? `다시 하기 ${votes}/${here}` : '상대가 나갔어요'}
-            </button>
+            </button>`}
             <button class="btn" type="button" data-action="lobby">로비로</button>
           </div>
         </div>`

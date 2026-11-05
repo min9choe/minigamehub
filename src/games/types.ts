@@ -1,8 +1,8 @@
 // 공통 게임 인터페이스(기획안 5장). 게임은 규칙과 화면만 갖고, 순서·시간·접속 처리는 room.ts가 맡는다.
 // 상태(S)와 수(M)는 메시지로 주고받으므로 JSON으로 바꿀 수 있는 값만 담는다.
 
-/** winners가 비어 있으면 무승부 */
-export type Result = { winners: string[] }
+/** winners가 비어 있으면 무승부. ranking이 있으면 결과 화면에 등수를 보여 준다(1등부터) */
+export type Result = { winners: string[]; ranking?: string[] }
 
 export interface GameContext<M> {
   myId: string

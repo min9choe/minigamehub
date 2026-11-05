@@ -98,6 +98,7 @@ export function createPracticeRoom(opts: {
       countdownEnd,
       result,
       rematch: new Set(rematch),
+      watchers: 0,
     }),
     subscribe(fn) {
       listeners.add(fn)

@@ -1,4 +1,4 @@
-// 땅따먹기(기획안 4장): 3번 튕겨 집으로 돌아오면 지나온 도형만큼 땅을 얻는다. 각자 8턴, 땅이 가장 넓은 사람이 이긴다.
+// 땅따먹기(기획안 4장): 3번 튕겨 내 땅으로 돌아오면 지나온 도형만큼 땅을 얻는다(남의 땅이어도 빼앗는다). 각자 8턴, 땅이 가장 넓은 사람이 이긴다.
 // 판정은 rules.ts, 물리는 알까기와 같은 shared/physics.ts를 쓴다.
 //
 // 동기화: 쏜 사람이 정지 위치(end)까지 계산해 수에 담아 보낸다. 면적은 이 정지 위치로만 계산하므로 모든 화면에서 같다.
@@ -27,7 +27,7 @@ export type State = {
   shotNo: number
   lastShot: { from: Point; vx: number; vy: number; player: number } | null
   /** 방금 끝난 턴 결과. 화면 안내와 도형 표시에 쓴다 */
-  lastTurn: { player: number; ok: boolean; gained: number; shape: Point[] } | null
+  lastTurn: { player: number; ok: boolean; gained: number; stolen?: number; shape: Point[] } | null
   winners: number[] | null
 }
 export type Move = { vx: number; vy: number; end: Point & { out: boolean } }
@@ -69,21 +69,26 @@ export function applyFlick(s: State, move: Move): State {
 
   const shape = [start, ...stops]
   if (!ownsAt(s, s.turn, end)) return endTurn(base, { player: s.turn, ok: false, gained: 0, shape })
-  const { land, gained } = claim(s.land, shape, s.turn)
+  const { land, gained, stolen } = claim(s.land, shape, s.turn, s.corners)
   const claims = [...s.claims, { player: s.turn, shape }]
-  return endTurn({ ...base, land, claims }, { player: s.turn, ok: true, gained, shape })
+  return endTurn({ ...base, land, claims }, { player: s.turn, ok: true, gained, stolen, shape })
 }
 
 /**
- * 이 자리가 player의 땅인가: 집 안, 내 칸, 또는 예전에 얻은 내 도형 안(남의 칸이 아니면).
+ * 이 자리가 player의 땅인가: 집 안, 내 칸, 또는 지금도 내 것으로 남아 있는 도형 안(칸이 빈 땅이면).
  * 도형 가장자리는 칸 중심이 바깥이라 칸으로는 안 잡히는 자리가 있어서 도형으로도 확인한다.
+ * 도형은 나중에 얻은 것이 위에 덮이므로, 이 자리를 덮은 가장 나중 도형의 주인을 본다.
  */
 export function ownsAt(s: Pick<State, 'land' | 'corners' | 'claims'>, player: number, p: Point): boolean {
   const owner = s.land[cellAt(p)]
   if (owner === player) return true
   if (insideHouse(s.corners[player], p)) return true
   if (owner !== -1) return false
-  return s.claims.some((c) => c.player === player && insidePolygon(p.x, p.y, c.shape))
+  for (let i = s.claims.length - 1; i >= 0; i--) {
+    const c = s.claims[i]
+    if (insidePolygon(p.x, p.y, c.shape)) return c.player === player
+  }
+  return false
 }
 
 export const territory: GameDef<State, Move> = {

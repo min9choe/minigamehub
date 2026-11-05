@@ -4,7 +4,8 @@ import { GAMES } from './games/catalog'
 import { getPlayerId } from './identity'
 import { openChannel, type ChannelStatus } from './net/realtime'
 
-export type LobbyState = { nick: string; game: string | null; queuedAt: number | null; room: string | null }
+/** room: 참가 중인 방, watching: 관전 중인 방 */
+export type LobbyState = { nick: string; game: string | null; queuedAt: number | null; room: string | null; watching?: string | null }
 export type LobbyPlayer = LobbyState & { id: string }
 export type Match = {
   roomId: string
@@ -12,6 +13,11 @@ export type Match = {
   players: { id: string; nick: string; queuedAt: number | null }[]
 }
 export type Lobby = ReturnType<typeof createLobby>
+/** 로비에서 보이는 진행 중인 판 */
+export type LiveRoom = { roomId: string; gameId: string; players: { id: string; nick: string }[]; watchers: number }
+
+/** 방 ID는 '게임ID-...'로 시작한다(startMatch) */
+export const gameOfRoom = (roomId: string) => roomId.split('-')[0]
 
 /** 2~4명 게임은 최소 인원이 모이면 이만큼 더 기다렸다가 모인 인원으로 시작한다(초안 값) */
 const GATHER_WAIT = 10_000
@@ -27,7 +33,7 @@ export function createLobby(opts: { nick: string; code: string; onMatch: (m: Mat
 
   let others: LobbyPlayer[] = []
   let status: ChannelStatus = 'connecting'
-  let mine: LobbyState = { nick: opts.nick, game: null, queuedAt: null, room: null }
+  let mine: LobbyState = { nick: opts.nick, game: null, queuedAt: null, room: null, watching: null }
   // 매칭 알림으로 이미 뽑힌 사람: { 플레이어ID: 그때의 줄 선 시각 }.
   // 뽑힌 사람의 줄 이탈이 반영되기 전에 다음 사람이 같은 사람을 또 뽑지 않게 한다(기획안 3장 매칭 규칙 4)
   const matched = new Map<string, number | null>()
@@ -128,6 +134,21 @@ export function createLobby(opts: { nick: string; code: string; onMatch: (m: Mat
     mine: () => mine,
     /** 지금 진행 중인 판 수 */
     roomsInProgress: () => new Set(players().map((p) => p.room).filter(Boolean)).size,
+    /** 진행 중인 판들. 참가자는 지금 그 방에 있다고 로비에 알린 사람들이다 */
+    liveRooms(): LiveRoom[] {
+      const rooms = new Map<string, LiveRoom>()
+      for (const p of players()) {
+        if (!p.room) continue
+        const r = rooms.get(p.room) ?? { roomId: p.room, gameId: gameOfRoom(p.room), players: [], watchers: 0 }
+        r.players.push({ id: p.id, nick: p.nick })
+        rooms.set(p.room, r)
+      }
+      for (const p of players()) {
+        const r = p.watching ? rooms.get(p.watching) : undefined
+        if (r) r.watchers++
+      }
+      return [...rooms.values()]
+    },
     subscribe(fn: () => void) {
       listeners.add(fn)
       return () => void listeners.delete(fn)
@@ -142,7 +163,11 @@ export function createLobby(opts: { nick: string; code: string; onMatch: (m: Mat
     },
     /** 방에 들어가면 줄에서 빠지고, 진행 중인 판 수에 잡힌다 */
     setRoom(room: string | null) {
-      setMine({ ...mine, game: null, queuedAt: null, room })
+      setMine({ ...mine, game: null, queuedAt: null, room, watching: null })
+    },
+    /** 관전은 줄을 그대로 둔다. 관전하는 사이 매칭되면 대전으로 옮겨 간다 */
+    setWatching(watching: string | null) {
+      setMine({ ...mine, watching })
     },
     leave() {
       for (const t of Object.values(timers)) clearTimeout(t)

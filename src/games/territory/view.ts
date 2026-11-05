@@ -10,7 +10,7 @@ import { G, areaOf, houseCenter, houseRect, type Point } from './rules'
 const COLORS = ['#2f6fde', '#d64545', '#1f9d55', '#d97a00']
 // 땅 색: 땅 층에서는 불투명하게 칠하고, 층 전체를 반투명하게 모래 위에 얹는다
 const TINTS = ['#4f86ee', '#e0574f', '#2fae63', '#ef9a2e']
-const STONE_R = 0.018
+const STONE_R = 0.013
 const MAX_PULL = 0.3 // 판 길이의 0.3만큼 당기면 최대 세기
 
 export function mountTerritory(el: HTMLElement, ctx: GameContext<Move>): GameView<State> {
@@ -41,7 +41,7 @@ export function mountTerritory(el: HTMLElement, ctx: GameContext<Move>): GameVie
   const name = (i: number) => ctx.names.get(latest!.order[i]) ?? ''
 
   function layout() {
-    const w = Math.floor(Math.min(el.clientWidth, 560, Math.max(280, window.innerHeight - 260)))
+    const w = Math.floor(Math.min(el.clientWidth, 680, Math.max(280, window.innerHeight - 230)))
     if (w <= 0 || w === size) return
     size = w
     const dpr = window.devicePixelRatio || 1
@@ -87,10 +87,9 @@ export function mountTerritory(el: HTMLElement, ctx: GameContext<Move>): GameVie
     lg.setTransform(canvas.width / size, 0, 0, canvas.height / size, 0, 0)
     lg.clearRect(0, 0, size, size)
 
-    // 땅은 지나온 경로 도형 그대로 칠한다. 겹친 곳은 먼저 얻은 사람 땅이므로, 나중에 얻은 도형부터 그리고
-    // 먼저 얻은 도형을 위에 덮는다. 집은 맨 처음 땅이라 가장 위에 그린다
-    for (let i = s.claims.length - 1; i >= 0; i--) {
-      const { player, shape } = s.claims[i]
+    // 땅은 지나온 경로 도형 그대로 칠한다. 겹친 곳은 나중에 얻은 사람이 빼앗은 땅이므로, 먼저 얻은 도형부터 그리고
+    // 나중 도형을 위에 덮는다. 집은 빼앗을 수 없으니 가장 위에 그린다
+    for (const { player, shape } of s.claims) {
       lg.fillStyle = TINTS[player]
       lg.beginPath()
       lg.moveTo(sx(shape[0]), sy(shape[0]))
@@ -304,7 +303,9 @@ export function mountTerritory(el: HTMLElement, ctx: GameContext<Move>): GameVie
         // 턴이 끝났으면 결과를 잠깐 알려 준다
         if (!fresh && s.lastTurn && s.lastTurn !== prev?.lastTurn) {
           const who = name(s.lastTurn.player)
-          notice = s.lastTurn.ok ? `${who} 성공! 땅 +${s.lastTurn.gained}칸` : `${who} 실패. 땅은 그대로예요`
+          notice = s.lastTurn.ok
+            ? `${who} 성공! 땅 +${s.lastTurn.gained}칸${s.lastTurn.stolen ? `, 그중 ${s.lastTurn.stolen}칸은 빼앗은 땅` : ''}`
+            : `${who} 실패. 땅은 그대로예요`
           noticeUntil = Date.now() + 3000
           // 재생이 끝날 즈음 결과 소리를 낸다
           window.setTimeout(s.lastTurn.ok ? sfx.gain : sfx.fall, anim ? 900 : 0)

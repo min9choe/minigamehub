@@ -348,6 +348,55 @@ input:not([type]):focus {
   background: var(--ticket-soft);
 }
 
+/* 진행 중인 판: 접속자 목록 위, 관전 버튼이 달린 행 */
+.live {
+  padding: 16px;
+}
+.live h2 {
+  margin-bottom: 6px;
+  font-size: 18px;
+}
+.live-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.live-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+.live-list li:first-child {
+  border-top: 0;
+}
+.live-list li > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
+}
+.live-list b {
+  font-size: 16px;
+}
+.live-list span {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.live-list small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.live-list .btn {
+  flex: none;
+  min-height: 38px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
 .players {
   padding: 16px;
 }
@@ -558,6 +607,13 @@ input:not([type]):focus {
   font-size: 22px;
   line-height: 1.2;
 }
+.watchers:empty {
+  display: none;
+}
+.watchers {
+  color: var(--muted);
+  font-size: 12px;
+}
 .clock {
   min-height: 1.5em;
   color: var(--muted);
@@ -679,6 +735,10 @@ input:not([type]):focus {
   gap: 8px;
   width: 100%;
   margin-top: 8px;
+}
+.overlay-note {
+  color: var(--muted);
+  font-size: 14px;
 }
 
 /* 휴대폰 가로 화면처럼 높이가 낮으면 위쪽 참가자 줄을 숨긴다. 이름과 차례는 게임마다 판 위에 따로 보인다 */
@@ -1161,6 +1221,13 @@ input:not([type]):focus {
   font-weight: 400;
 }
 .dt-scores li.is-out,
+.yt-rank {
+  margin-left: auto;
+  font-size: 14px;
+}
+.yt-players li.is-ranked {
+  background: var(--ticket-soft);
+}
 .yt-players li.is-out {
   opacity: 0.5;
 }

@@ -8,7 +8,8 @@ import { getPlayerId } from './identity'
 import { openChannel } from './net/realtime'
 
 export type RoomPlayer = { id: string; nick: string }
-export type RoomInfo = { roomId: string; gameId: string; players: RoomPlayer[] }
+/** watch: 관전하러 들어온 방. 나는 players에 없고, 판 상태만 받아 본다 */
+export type RoomInfo = { roomId: string; gameId: string; players: RoomPlayer[]; watch?: boolean }
 export type Phase = 'waiting' | 'countdown' | 'playing' | 'result' | 'closed'
 
 export type RoomView = {
@@ -26,6 +27,8 @@ export type RoomView = {
   countdownEnd: number | null
   result: Result | null
   rematch: Set<string>
+  /** 관전 중인 사람 수(나 포함) */
+  watchers: number
 }
 
 export type RoomHandle = ReturnType<typeof createRoom>
@@ -45,6 +48,8 @@ type Presence = { hasState: boolean }
 type GameEvent = { v: number; kind: 'move' | 'timeout' | 'forfeit'; by: string; move?: unknown }
 type StartMsg = { round: number; seed: number; order: string[] }
 type SyncMsg = {
+  /** 관전자가 참가자 이름을 알 수 있도록 함께 보낸다 */
+  players?: RoomPlayer[]
   round: number
   v: number
   state: unknown
@@ -72,7 +77,9 @@ export function createRoom(opts: {
 }) {
   const { info, def } = opts
   const me = getPlayerId()
-  const ids = info.players.map((p) => p.id)
+  // 관전자는 처음엔 로비에서 본 참가자 목록으로 시작하고, 판 상태를 받을 때 방장이 가진 목록으로 바꾼다
+  let ids = info.players.map((p) => p.id)
+  const watching = !!info.watch
   const turnMs = def.turnSeconds * 1000
   const listeners = new Set<() => void>()
   const emit = () => listeners.forEach((fn) => fn())
@@ -83,7 +90,7 @@ export function createRoom(opts: {
   let state: unknown = null
   let order: string[] = []
   let result: Result | null = null
-  let hasState = !opts.rejoin
+  let hasState = !opts.rejoin && !watching
   let deadline: number | null = null
   let countdownEnd: number | null = null
   let wasHost = false
@@ -133,7 +140,7 @@ export function createRoom(opts: {
   })
   void ch.track({ hasState })
 
-  if (!opts.rejoin) {
+  if (!opts.rejoin && !watching) {
     entryTimer = window.setTimeout(() => {
       if (round > 0) return
       if (iAmHost()) {
@@ -383,6 +390,7 @@ export function createRoom(opts: {
   function sendSync() {
     if (round === 0 || state === null || !hasState) return
     const msg: SyncMsg = {
+      players: info.players,
       round,
       v,
       state,
@@ -402,6 +410,10 @@ export function createRoom(opts: {
       return
     }
     if (p.round < round || (hasState && p.round === round && p.v < v)) return
+    if (watching && Array.isArray(p.players) && p.players.length) {
+      info.players = p.players.map(({ id, nick }) => ({ id: String(id), nick: String(nick) }))
+      ids = info.players.map((pl) => pl.id)
+    }
     clearTimeout(entryTimer)
     clearTimeout(countdownTimer)
     clearInterval(syncTimer)
@@ -429,6 +441,7 @@ export function createRoom(opts: {
   }
 
   function vote(id: string) {
+    if (!ids.includes(id)) return
     rematch.add(id)
     checkRematch()
     emit()
@@ -472,6 +485,7 @@ export function createRoom(opts: {
       countdownEnd,
       result,
       rematch: new Set(rematch),
+      watchers: [...members.keys()].filter((id) => !ids.includes(id)).length,
     }),
     subscribe(fn: () => void) {
       listeners.add(fn)
@@ -510,7 +524,7 @@ export function createRoom(opts: {
       else void ch.send('intent', { round, v, kind: 'forfeit', by: me })
     },
     requestRematch() {
-      if (phase !== 'result') return
+      if (phase !== 'result' || watching) return
       void ch.send('rematch', { id: me, round })
       vote(me)
     },

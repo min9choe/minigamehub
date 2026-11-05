@@ -5,15 +5,15 @@ import { G, areaOf, cellAt, claim, cornersFor, houseCenter, initialLand, insideP
 const P = (x: number, y: number) => ({ x, y })
 
 describe('땅 칠하기', () => {
-  it('처음에는 각자 집 144칸만 가진다', () => {
+  it('처음에는 각자 집 100칸만 가진다', () => {
     const land = initialLand(cornersFor(4))
-    for (let p = 0; p < 4; p++) expect(areaOf(land, p)).toBe(144)
+    for (let p = 0; p < 4; p++) expect(areaOf(land, p)).toBe(100)
   })
 
   it('2명은 마주 보는 모서리를 쓴다', () => {
     expect(cornersFor(2)).toEqual([0, 2])
-    expect(houseCenter(0)).toEqual({ x: 6 / G, y: 44 / G })
-    expect(houseCenter(2)).toEqual({ x: 44 / G, y: 6 / G })
+    expect(houseCenter(0)).toEqual({ x: 5 / G, y: 55 / G })
+    expect(houseCenter(2)).toEqual({ x: 55 / G, y: 5 / G })
   })
 
   it('삼각형 안의 칸 중심만 칠한다', () => {
@@ -26,11 +26,24 @@ describe('땅 칠하기', () => {
     expect(next[cellAt(P(0.9, 0.1))]).toBe(-1)
   })
 
-  it('남의 땅은 빼앗지 않는다', () => {
-    const land = initialLand(cornersFor(2))
-    const { land: next, gained } = claim(land, [P(0, 0), P(1, 0), P(1, 1), P(0, 1)], 0)
-    expect(areaOf(next, 1)).toBe(144)
-    expect(gained).toBe(G * G - 288)
+  it('남의 집은 빼앗지 못한다', () => {
+    const corners = cornersFor(2)
+    const land = initialLand(corners)
+    const { land: next, gained, stolen } = claim(land, [P(0, 0), P(1, 0), P(1, 1), P(0, 1)], 0, corners)
+    expect(areaOf(next, 1)).toBe(100)
+    expect(gained).toBe(G * G - 200)
+    expect(stolen).toBe(0)
+  })
+
+  it('남이 먼저 얻은 땅은 도형 안이면 빼앗는다', () => {
+    const corners = cornersFor(2)
+    let land = initialLand(corners)
+    land = claim(land, [P(0.3, 0.3), P(0.7, 0.3), P(0.7, 0.7), P(0.3, 0.7)], 1, corners).land
+    const before = areaOf(land, 1)
+    const r = claim(land, [P(0.2, 0.2), P(0.8, 0.2), P(0.8, 0.8), P(0.2, 0.8)], 0, corners)
+    expect(r.stolen).toBe(before - 100)
+    expect(areaOf(r.land, 1)).toBe(100)
+    expect(r.land[cellAt(P(0.5, 0.5))]).toBe(0)
   })
 
   it('꼬인 도형(나비넥타이)은 양쪽 삼각형이 모두 안쪽이다', () => {
@@ -55,7 +68,7 @@ describe('턴 진행', () => {
     s = applyFlick(s, stop(home.x, home.y - 0.02))
     expect(s.lastTurn?.ok).toBe(true)
     expect(s.lastTurn!.gained).toBeGreaterThan(50)
-    expect(areaOf(s.land, 0)).toBe(144 + s.lastTurn!.gained)
+    expect(areaOf(s.land, 0)).toBe(100 + s.lastTurn!.gained)
     expect(s.turn).toBe(1)
     expect(s.stone).toEqual(houseCenter(2))
   })
@@ -66,7 +79,7 @@ describe('턴 진행', () => {
     s = applyFlick(s, stop(0.5, 0.5))
     s = applyFlick(s, stop(0.6, 0.6))
     expect(s.lastTurn?.ok).toBe(false)
-    expect(areaOf(s.land, 0)).toBe(144)
+    expect(areaOf(s.land, 0)).toBe(100)
     expect(s.turn).toBe(1)
   })
 
@@ -88,6 +101,21 @@ describe('턴 진행', () => {
     s = applyFlick(s, stop(0.6, 0.6))
     s = applyFlick(s, stop(0.35, 0.35))
     expect(s.lastTurn?.ok).toBe(true)
+  })
+
+  it('내 도형을 나중에 남이 덮었으면 그 자리는 더 이상 내 땅이 아니다', () => {
+    let s: State = start()
+    s = {
+      ...s,
+      claims: [
+        { player: 0, shape: [P(0.3, 0.3), P(0.7, 0.3), P(0.3, 0.7)] },
+        { player: 1, shape: [P(0.32, 0.32), P(0.5, 0.32), P(0.32, 0.5)] },
+      ],
+    }
+    s = applyFlick(s, stop(0.5, 0.88))
+    s = applyFlick(s, stop(0.6, 0.6))
+    s = applyFlick(s, stop(0.34, 0.34))
+    expect(s.lastTurn?.ok).toBe(false)
   })
 
   it('내 도형 안이어도 그 자리가 남의 칸이면 실패다', () => {

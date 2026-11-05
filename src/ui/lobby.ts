@@ -1,5 +1,5 @@
 // 로비 화면: 접속 인원, 게임 카드와 줄서기, 대기 바, 접속자 목록(기획안 7장).
-import { closeInvite, currentInvite, getLobby, makeInvite, startPractice, takeNotice, takePendingQueue } from '../app'
+import { closeInvite, currentInvite, getLobby, makeInvite, startPractice, takeNotice, takePendingQueue, watchRoom } from '../app'
 import { cardArt } from '../assets/art'
 import { GAMES, capacityLabel, findGame } from '../games/catalog'
 import { displayNames, getPlayerId, loadProfile } from '../identity'
@@ -63,6 +63,10 @@ export function renderLobby(root: HTMLElement) {
               </div>
             </article>`
           ).join('')}
+        </section>
+        <section class="live card" hidden>
+          <h2>진행 중인 판</h2>
+          <ul class="live-list"></ul>
         </section>
         <section class="players card">
           <h2>지금 로비에 있는 사람</h2>
@@ -186,17 +190,38 @@ export function renderLobby(root: HTMLElement) {
       $<HTMLButtonElement>(ticket, '[data-action=cancel]').disabled = cooling
     }
 
+    // 진행 중인 판: 누르면 관전한다
+    const live = lobby.liveRooms().filter((r) => findGame(r.gameId)?.def)
+    $(root, '.live').hidden = !live.length
+    setHtml($(root, '.live-list'), live
+      .map((r) => {
+        const who = r.players.map((p) => esc(names.get(p.id) ?? p.nick)).join(', ')
+        return `<li>
+          <div><b>${esc(findGame(r.gameId)!.name)}</b><span>${who}</span>${r.watchers ? `<small>${r.watchers}명 관전 중</small>` : ''}</div>
+          <button class="btn" type="button" data-action="watch" data-room="${esc(r.roomId)}" ${mine.room ? 'disabled' : ''}>관전하기</button>
+        </li>`
+      })
+      .join(''))
+
     const sorted = [...players].sort((a, b) =>
       a.id === myId ? -1 : b.id === myId ? 1 : a.nick.localeCompare(b.nick, 'ko')
     )
     $(root, '.player-list').innerHTML = sorted
       .map((p) => {
-        const where = p.room ? '게임 중' : p.game ? `${findGame(p.game)?.name ?? ''} 대기` : ''
+        const where = p.room ? '게임 중' : p.watching ? '관전 중' : p.game ? `${findGame(p.game)?.name ?? ''} 대기` : ''
         return `<li${p.id === myId ? ' class="is-me"' : ''}>${esc(names.get(p.id)!)}${
           where ? ` <small>${esc(where)}</small>` : ''
         }</li>`
       })
       .join('')
+  }
+
+  // 다시 그려도 내용이 같으면 건드리지 않아야 누르던 버튼이 사라지지 않는다
+  const lastHtml = new Map<HTMLElement, string>()
+  function setHtml(el: HTMLElement, html: string) {
+    if (lastHtml.get(el) === html) return
+    lastHtml.set(el, html)
+    el.innerHTML = html
   }
 
   let cooldownTimer = 0
@@ -225,6 +250,9 @@ export function renderLobby(root: HTMLElement) {
         break
       case 'leave':
         go('/')
+        break
+      case 'watch':
+        watchRoom(btn.dataset.room!)
         break
       case 'open-invite':
         openSheet(

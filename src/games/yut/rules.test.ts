@@ -108,7 +108,39 @@ describe('윷놀이 진행', () => {
   it('말을 모두 완주시키면 이긴다', () => {
     const almost: State = { ...s0, pieces: s0.pieces.map((ps, p) => (p === me ? ps.map((pc, k) => (k === 0 ? walk(newPiece(), 5, 3) : { ...pc, done: true, started: true })) : ps)) }
     const s = yut.apply(withPending(almost, 5), id, { kind: 'move', piece: 0, use: 0 })!
-    expect(yut.result(s)).toEqual({ winners: [id] })
+    expect(yut.result(s)?.winners).toEqual([id])
+  })
+
+  it('3명 이상이면 1등이 나와도 이어 가고, 마지막 한 명이 남으면 등수대로 끝난다', () => {
+    const allDoneBut = (st: State, p: number): State => ({
+      ...st,
+      pieces: st.pieces.map((ps, q) => (q === p ? ps.map((pc, k) => (k === 0 ? walk(newPiece(), 5, 3) : { ...pc, done: true, started: true })) : ps)),
+    })
+    let s: State = yut.init(['a', 'b', 'c'], 0)
+    // a가 먼저 완주한다
+    s = allDoneBut(s, 0)
+    s = yut.apply(withPending({ ...s, turn: 0 }, 5), 'a', { kind: 'move', piece: 0, use: 0 })!
+    expect(s.ranks).toEqual([0])
+    expect(yut.result(s)).toBeNull()
+    expect(s.turn).toBe(1)
+    // 완주한 사람은 차례를 건너뛴다
+    s = yut.skip(s)
+    expect(s.turn).toBe(2)
+    s = yut.skip(s)
+    expect(s.turn).toBe(1)
+    // b가 완주하면 c가 꼴찌로 정해지고 끝난다
+    s = allDoneBut(s, 1)
+    s = yut.apply(withPending(s, 5), 'b', { kind: 'move', piece: 0, use: 0 })!
+    expect(yut.result(s)).toEqual({ winners: ['a'], ranking: ['a', 'b', 'c'] })
+  })
+
+  it('완주한 사람이 나가도 등수는 그대로다', () => {
+    let s: State = yut.init(['a', 'b', 'c'], 0)
+    s = { ...s, ranks: [0], turn: 1 }
+    s = yut.eliminate(s, 'a')
+    expect(s.ranks).toEqual([0])
+    s = yut.eliminate(s, 'c')
+    expect(yut.result(s)).toEqual({ winners: ['a'], ranking: ['a', 'b'] })
   })
 
   it('봇끼리 두면 결국 누군가 이긴다', () => {

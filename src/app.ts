@@ -35,6 +35,8 @@ export function stopLobby() {
 }
 
 function enterMatch(m: Match) {
+  // 관전하다 내 줄이 매칭되면 관전을 접고 들어간다
+  if (room?.info.watch) void leaveRoom()
   if (room) return
   // 줄을 선 채로 연습하던 중에 매칭되면 연습을 접고 대전으로 간다
   void practice?.leave()
@@ -52,7 +54,8 @@ function enterMatch(m: Match) {
 function openRoom(info: RoomInfo, rejoin: boolean) {
   const game = findGame(info.gameId)
   if (!game?.def) return
-  lobby?.setRoom(info.roomId)
+  if (info.watch) lobby?.setWatching(info.roomId)
+  else lobby?.setRoom(info.roomId)
   room = createRoom({
     info,
     def: game.def,
@@ -66,6 +69,17 @@ function openRoom(info: RoomInfo, rejoin: boolean) {
   })
   // 개발 중에만: 콘솔에서 __mghRoom.view()로 판 상태를 들여다본다(배포 빌드에서는 빠진다)
   if (import.meta.env.DEV) Object.assign(window, { __mghRoom: room })
+}
+
+/** 진행 중인 판을 관전한다. 참가자 이름은 로비에서 본 목록으로 시작해, 방장에게 판 상태를 받으면 바로잡는다 */
+export function watchRoom(roomId: string) {
+  if (room || practice || !lobby) return
+  const live = lobby.liveRooms().find((r) => r.roomId === roomId)
+  if (!live || !findGame(live.gameId)?.def) return
+  const info: RoomInfo = { roomId, gameId: live.gameId, players: live.players, watch: true }
+  saveRoomInfo(info)
+  openRoom(info, true)
+  go('/game')
 }
 
 /** 봇과 연습한다(틱택토, 오목). 줄을 서 있었다면 그대로 두어 연습 중에도 매칭될 수 있다 */
@@ -96,7 +110,8 @@ export async function leaveRoom() {
   const r = room
   room = null
   clearRoomInfo()
-  if (r) lobby?.setRoom(null)
+  if (r?.info.watch) lobby?.setWatching(null)
+  else if (r) lobby?.setRoom(null)
   await r?.leave()
 }
 
