@@ -13,6 +13,8 @@ import { reversiBot } from './reversi/bot'
 import { territory } from './territory'
 import { tictactoe } from './tictactoe'
 import { tictactoeBot } from './tictactoe/bot'
+import { walls } from './walls'
+import { wallsBot } from './walls/bot'
 import { yut } from './yut'
 import { yutBot } from './yut/bot'
 import type { GameDef } from './types'
@@ -40,6 +42,7 @@ export const GAMES: GameInfo[] = [
   { id: 'dots', name: '점 잇기', summary: '선을 그어 상자를 닫으면 내 것, 한 번 더', min: 2, max: 4, def: dots, bot: dotsBot },
   { id: 'curling', name: '컬링', summary: '얼음 위로 돌을 밀어 과녁 가운데에 가깝게', min: 2, max: 2, def: curling },
   { id: 'baseball', name: '숫자 야구', summary: '아무도 모르는 4자리를 번갈아 불러 먼저 맞히기', min: 2, max: 2, def: baseball, bot: baseballBot },
+  { id: 'walls', name: '벽 쌓기', summary: '벽으로 길을 막으며 상대 쪽 끝줄에 먼저 닿기', min: 2, max: 2, def: walls, bot: wallsBot },
 ]
 
 export function findGame(id: string) {

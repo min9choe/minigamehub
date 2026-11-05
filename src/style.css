@@ -1111,7 +1111,8 @@ input:not([type]):focus {
 .rv,
 .dt,
 .cl,
-.yt {
+.yt,
+.wl {
   display: grid;
   gap: 8px;
 }
@@ -1147,21 +1148,24 @@ input:not([type]):focus {
 .rv-wrap,
 .dt-wrap,
 .cl-wrap,
-.yt-wrap {
+.yt-wrap,
+.wl-wrap {
   display: flex;
   justify-content: center;
 }
 .rv-board,
 .dt-board,
 .cl-board,
-.yt-board {
+.yt-board,
+.wl-board {
   border-radius: 8px;
   touch-action: none;
 }
 .rv-hint,
 .dt-hint,
 .cl-hint,
-.yt-hint {
+.yt-hint,
+.wl-hint {
   min-height: 1.5em;
   color: var(--muted);
   font-size: 14px;
@@ -1413,4 +1417,49 @@ input:not([type]):focus {
 .bb-chip.is-out {
   min-width: 80px;
   background: var(--muted);
+}
+
+/* 벽 쌓기: 두 사람 점수 줄(남은 벽), 할 일 고르기, 벽 방향과 확정 */
+.wl-score {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+}
+.wl-score span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.wl-score span.is-turn {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.wl-score i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.wl-score small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.wl-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.wl-mode {
+  display: inline-flex;
+  gap: 4px;
+}
+.wl-controls .btn {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 14px;
 }

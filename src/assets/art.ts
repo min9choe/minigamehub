@@ -13,6 +13,7 @@ import cardBaseball from './img/card-baseball.webp'
 import cardCurling from './img/card-curling.webp'
 import cardDots from './img/card-dots.webp'
 import cardReversi from './img/card-reversi.webp'
+import cardWalls from './img/card-walls.webp'
 import cardYut from './img/card-yut.webp'
 import ice from './img/ice.webp'
 import yutBoard from './img/yut-board.webp'
@@ -30,6 +31,7 @@ export const cardArt: Record<string, string> = {
   curling: cardCurling,
   yut: cardYut,
   baseball: cardBaseball,
+  walls: cardWalls,
 }
 
 const cache = new Map<string, HTMLImageElement>()
