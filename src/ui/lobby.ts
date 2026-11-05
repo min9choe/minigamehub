@@ -6,6 +6,7 @@ import { displayNames, getPlayerId, loadProfile } from '../identity'
 import { isConfigured, type ChannelStatus } from '../net/realtime'
 import { go, refresh } from '../router'
 import { $, esc } from './dom'
+import { openRules } from './rules'
 
 const STATUS_TEXT: Record<ChannelStatus, string> = {
   connecting: '연결 중',
@@ -59,6 +60,7 @@ export function renderLobby(root: HTMLElement) {
               <p>${esc(g.summary)}</p>
               <div class="game-foot">
                 <span class="waiting"></span>
+                ${g.def ? `<button class="btn ghost" type="button" data-action="rules" aria-label="${esc(g.name)} 규칙 보기">규칙</button>` : ''}
                 <button class="btn" type="button" data-action="queue" disabled>${g.def ? '줄서기' : '준비 중'}</button>
               </div>
             </article>`
@@ -250,6 +252,9 @@ export function renderLobby(root: HTMLElement) {
         break
       case 'leave':
         go('/')
+        break
+      case 'rules':
+        openRules(btn.closest<HTMLElement>('[data-game]')!.dataset.game!)
         break
       case 'watch':
         watchRoom(btn.dataset.room!)

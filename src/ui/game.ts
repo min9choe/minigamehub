@@ -6,6 +6,7 @@ import type { RoomLike, RoomView } from '../room'
 import { go } from '../router'
 import { isMuted, onMuteChange, setMuted, sfx } from '../sound'
 import { $, esc } from './dom'
+import { openRules } from './rules'
 
 const secondsLeft = (until: number | null) => (until ? Math.max(0, Math.ceil((until - Date.now()) / 1000)) : 0)
 
@@ -35,6 +36,7 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
           <span class="watchers"></span>
         </div>
         <div class="game-actions">
+          <button class="btn ghost icon" type="button" data-action="rules" aria-label="규칙 보기" title="규칙">?</button>
           <button class="btn ghost icon" type="button" data-action="mute"></button>
           <button class="btn ghost danger" type="button" data-action="forfeit" hidden>기권</button>
         </div>
@@ -211,6 +213,9 @@ export function renderGame(root: HTMLElement, room: RoomLike) {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-action]')
     if (!btn || btn.disabled) return
     switch (btn.dataset.action) {
+      case 'rules':
+        openRules(info.gameId)
+        break
       case 'mute':
         setMuted(!isMuted())
         break

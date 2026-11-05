@@ -288,7 +288,7 @@ input:not([type]):focus {
 }
 .game {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr) auto;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
   grid-template-areas:
     'art head foot'
     'art desc foot';
@@ -300,9 +300,9 @@ input:not([type]):focus {
 }
 .game-art {
   grid-area: art;
-  width: 76px;
-  height: 57px;
-  border-radius: 4px;
+  width: 88px;
+  height: 66px;
+  border-radius: 6px;
   object-fit: cover;
   background: var(--line);
 }
@@ -346,6 +346,92 @@ input:not([type]):focus {
 }
 .game.is-queued {
   background: var(--ticket-soft);
+}
+/* 규칙 버튼은 줄서기보다 작게, 글자 링크처럼 */
+.game-foot .btn[data-action='rules'] {
+  min-height: 28px;
+  padding: 0 6px;
+  border: 0;
+  color: var(--accent);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* 규칙서 창 */
+.rules {
+  width: min(560px, calc(100% - 24px));
+  max-height: min(86vh, 760px);
+  margin: auto;
+  padding: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+.rules::backdrop {
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+.rules-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  max-height: inherit;
+}
+.rules-head {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 2px solid var(--ink);
+}
+.rules-head img {
+  width: 72px;
+  height: 54px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.rules-head h2 {
+  font-size: 24px;
+  line-height: 1.15;
+}
+.rules-head p {
+  color: var(--muted);
+  font-size: 13px;
+}
+.rules-body {
+  display: grid;
+  gap: 16px;
+  overflow-y: auto;
+  padding: 16px 16px 20px;
+  max-height: calc(min(86vh, 760px) - 90px);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.rules-goal {
+  padding: 10px 12px;
+  border-left: 4px solid var(--ticket);
+  background: var(--ticket-soft);
+  color: var(--ink);
+}
+.rules-body h3 {
+  margin-bottom: 4px;
+  font-size: 17px;
+}
+.rules-body ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 1.2em;
+}
+.rules-tip p {
+  color: var(--muted);
+}
+.rules-common {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
 }
 
 /* 진행 중인 판: 접속자 목록 위, 관전 버튼이 달린 행 */
