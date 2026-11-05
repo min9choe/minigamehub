@@ -13,8 +13,18 @@ import { reversiBot } from './reversi/bot'
 import { territory } from './territory'
 import { tictactoe } from './tictactoe'
 import { tictactoeBot } from './tictactoe/bot'
+import { checkers } from './checkers'
+import { checkersBot } from './checkers/bot'
+import { four } from './four'
+import { fourBot } from './four/bot'
+import { mancala } from './mancala'
+import { mancalaBot } from './mancala/bot'
+import { pirates } from './pirates'
+import { piratesBot } from './pirates/bot'
 import { walls } from './walls'
 import { wallsBot } from './walls/bot'
+import { yacht } from './yacht'
+import { yachtBot } from './yacht/bot'
 import { yut } from './yut'
 import { yutBot } from './yut/bot'
 import type { GameDef } from './types'
@@ -43,6 +53,11 @@ export const GAMES: GameInfo[] = [
   { id: 'curling', name: '컬링', summary: '얼음 위로 돌을 밀어 과녁 가운데에 가깝게', min: 2, max: 2, def: curling },
   { id: 'baseball', name: '숫자 야구', summary: '아무도 모르는 4자리를 번갈아 불러 먼저 맞히기', min: 2, max: 2, def: baseball, bot: baseballBot },
   { id: 'walls', name: '벽 쌓기', summary: '벽으로 길을 막으며 상대 쪽 끝줄에 먼저 닿기', min: 2, max: 2, def: walls, bot: wallsBot },
+  { id: 'yacht', name: '야추', summary: '주사위 5개를 세 번까지 굴려 족보 12칸 채우기', min: 2, max: 4, def: yacht, bot: yachtBot },
+  { id: 'four', name: '사목', summary: '세운 판에 돌을 떨어뜨려 넷을 먼저 잇기', min: 2, max: 2, def: four, bot: fourBot },
+  { id: 'pirates', name: '해적선 찾기', summary: '몰래 숨긴 배 4척을 대포로 먼저 모두 가라앉히기', min: 2, max: 2, def: pirates, bot: piratesBot },
+  { id: 'mancala', name: '만칼라', summary: '씨앗을 한 알씩 뿌려 내 창고에 더 많이 모으기', min: 2, max: 2, def: mancala, bot: mancalaBot },
+  { id: 'checkers', name: '체커', summary: '대각선으로 뛰어넘어 상대 말을 모두 잡기', min: 2, max: 2, def: checkers, bot: checkersBot },
 ]
 
 export function findGame(id: string) {

@@ -13,7 +13,12 @@ import cardBaseball from './img/card-baseball.webp'
 import cardCurling from './img/card-curling.webp'
 import cardDots from './img/card-dots.webp'
 import cardReversi from './img/card-reversi.webp'
+import cardCheckers from './img/card-checkers.webp'
+import cardFour from './img/card-four.webp'
+import cardMancala from './img/card-mancala.webp'
+import cardPirates from './img/card-pirates.webp'
 import cardWalls from './img/card-walls.webp'
+import cardYacht from './img/card-yacht.webp'
 import cardYut from './img/card-yut.webp'
 import ice from './img/ice.webp'
 import yutBoard from './img/yut-board.webp'
@@ -32,6 +37,11 @@ export const cardArt: Record<string, string> = {
   yut: cardYut,
   baseball: cardBaseball,
   walls: cardWalls,
+  yacht: cardYacht,
+  four: cardFour,
+  pirates: cardPirates,
+  mancala: cardMancala,
+  checkers: cardCheckers,
 }
 
 const cache = new Map<string, HTMLImageElement>()
